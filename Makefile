@@ -1,0 +1,59 @@
+
+CC = icc
+CFLAGS = -Wall -m64 -msse2 -O3 -g 
+CXX = icpc
+CXXFLAGS = -Wall -m64 -msse2 -O3 -g 
+CUDAHOME = /usr/local/encap/cuda-5.0
+CUDACC = $(CUDAHOME)/bin/nvcc
+CUDACCFLAGS = -m64 -g -arch sm_21
+CUDALIBS = -Bdynamic -Wl,-rpath,$(CUDAHOME)/lib64 -L$(CUDAHOME)/lib64 -lcudart 
+
+PARAMS = -c -0.08887868 0.654803
+NUMFRAMES = 3000
+
+.SUFFIXES: .C .c .cu ..c .i .o
+
+.cu.o:
+	$(CUDACC) $(CUDACCFLAGS) -c $<
+
+.c.o:
+	$(CC) $(CCFLAGS) -c $<
+
+.C.o:
+	$(CXX) $(CXXFLAGS) -c $<
+
+OBJS = mandelbrot.o WKFUtils.o cudaFloat.o
+
+all : mandelbrot
+
+mandelbrot : $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o mandelbrot $(CUDALIBS)
+
+runSerial : all
+	./mandelbrot serial
+	display mandelbrot.pgm
+
+runSSE2 : all
+	./mandelbrot SSE2
+	display mandelbrot.pgm
+
+runAVX : all
+	./mandelbrot AVX 
+	display mandelbrot.pgm
+
+runCUDA : all
+	./mandelbrot CUDA 
+	display mandelbrot.pgm
+
+animate : all
+	./mandelbrot CUDA $(PARAMS)
+	foreach x (`seq 0 $(NUMFRAMES)`)
+	convert -quality 100 ppms/mandelbrot$x.ppm ppms/mandelbrot$x.jpg
+	rm -f ppms/mandelbrot$x.ppm
+	end
+	ffmpeg -r 24 -b 1800 -i ppms/mandelbrot%d.jpg movie.mp4
+
+clean:	
+	rm -f $(OBJS) mandelbrot ppms/*.ppm ppms/*.jpg
+
+

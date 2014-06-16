@@ -1,0 +1,56 @@
+TO DO =========================================================================================================
+
+Test harness
+    Calling various functions
+    Make reference (serial implementation)
+    Store 'correct' output in file and compare vectorized versions' output to file (every time test is run)
+    Measure performance
+    Handle multi-core OpenMP (?) (this may have to be done inside the code for each platform or each solution)
+
+"Solutions" - Each must be implemented, performance compared using the harness
+    Intel compiler vectorization - directives #ivdep, #vector, restrict keyword, -fnoalias compiler flag, others
+        - use -vecreport perhaps? to see what the code was vectorized to
+    OpenMP 3.0 directives - similar to above except using OpenMP vectorization directives
+        - can still see what the code was vectorized to using -vecreport?
+    Intrinsics - program directly the vectorized code
+        - should be fastest
+    ISPC - similar to compiler directives, tries to auto-vectorize code
+        - Can check what vectorized code was generated?
+
+Each of the above "solutions" should be applied for AVX and for Phi, if applicable
+
+GCC/Clang - Use compiler autovectorization and/or directives to compile for the ARM platform only
+    - Compare to the ARM code produced by ISPC
+    - Might also compare to ARM intrinsics
+
+Schedule ======================================================================================================
+
+    Test harness - make serial code work on Phi and through ISPC, GCC/Clang 
+    Test harness - correctness measurement capabilities; test on the (existing) AVX intrinsics version vs serial
+    Test harness - performance measurement    
+    Multi-core OpenMP
+    Intrinsics - implemented and running for AVX            -- complete
+    Intrinsics - implemented and running for Phi
+    Intrinsics - implemented and running for ARM, if applicable
+    Intel compiler vectorization - implemented and running for AVX
+    Intel compiler vectorization - implemented and running for Phi
+    OpenMP 3.0 directives - implemented and running for AVX
+    OpenMP 3.0 directives - implemented and running for Phi
+    ISPC - implemented and running for AVX
+    ISPC - implemented and running for Phi
+    GCC/Clang - implemented and running for ARM
+    ISPC - implemented and running for ARM
+    Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi
+    OpenMP 3.0 directives - analysis and compare generated code? for AVX, Phi
+    ISPC - analysis, compare generated code? for AVX, Phi
+    ISPC - analysis, compare generated code for ARM IF we implemented intrinsics for ARM
+
+    Overall performance analysis - where is the bottleneck on various systems, is performance what we expect, etc
+
+    Mandelbrot - entire above list complete     July 4 end of day
+    Basic NAMD Kernel - all functionality adapted for the new code     July 18 ????????
+    More advanced NAMD Kernel - if time
+    Presentation 1 - June 17 (Craig) 24 (Jordan)
+    Presentation 2 - July 22 (Jordan) 29 (Craig)
+    Poster - TBD, probably Aug 1 for printing 
+    
