@@ -223,7 +223,7 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
 #endif
 
 void printUsage() {
-    printf("Usage: mandelbrot serial|SSE2|AVX|CUDA -c centerReal centerImag -s size -d steps -f filename -b\n");
+    printf("Usage: testHarness serial|SSE2|AVX -c centerReal centerImag -s size -d steps -f filename -b\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -238,15 +238,13 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    // parse serial|SSE2||AVX|CUDA
+    // parse serial|SSE2||AVX
     bool serial = false;
     bool sse2 = false;
     bool avx = false;
-    bool cuda = false;
     if (!strcmp(argv[1], "serial\0")) serial = true;
     else if (!strcmp(argv[1], "SSE2\0")) sse2 = true;
     else if (!strcmp(argv[1], "AVX\0")) avx = true;
-    else if (!strcmp(argv[1], "CUDA\0")) cuda = true;
     else {
       printUsage();
       return 0;
@@ -282,9 +280,6 @@ int main(int argc, char* argv[]) {
     else if (avx)
         // make steps divisible by 8
         while (steps % 8 != 0) steps++;
-    else if (cuda)
-        // make steps divisible by 16
-        while (steps % 16 != 0) steps++;
     
     int horizsteps = steps*16/9;
     if (horizsteps % 16 != 0) {
@@ -296,9 +291,6 @@ int main(int argc, char* argv[]) {
     int numPixels = steps*horizsteps;
     unsigned* output = (unsigned*)malloc(numPixels*sizeof(unsigned));
     
-    int NUM_FRAMES = 3000;
-    for (int frame = 0; frame < NUM_FRAMES; frame++, size *= 0.97) {
-
     float horizsize = size*16.0f/9.0f;
 
     wkf_timerhandle timer = wkf_timer_create();
@@ -350,14 +342,6 @@ int main(int argc, char* argv[]) {
         if(bench) printf("avxFloat: Time: %f\n", time);
 #endif
        
-    } else {
-
-        wkf_timer_start(timer);
-        cudaDouble(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("cudaDouble including memory transfer: Time: %f\n", time);
-
     }
 
     // performance metrics
@@ -426,8 +410,6 @@ int main(int argc, char* argv[]) {
     fwrite(buffer, sizeof(unsigned char), 3*numPixels, f);
 
     fclose(f);
-
-    }
 
     return 0;
 }
