@@ -1,0 +1,38 @@
+DEPS = main.C msmloops.C msmmacros.h utilities.C utilities.h WKFUtils.C WKFUtils.h
+SRC  = main.C msmloops.C utilities.C WKFUtils.C 
+
+BINS = testicc testgcc  testiccsse testgccsse testiccavx testgccavx 
+
+all : $(BINS)
+testiccavx : $(DEPS)
+	icpc -m64 -DVMDUSESSE -DVMDUSEAVX -fast -no-ipo -mavx $(SRC) -o testiccavx -lm
+
+testiccsse : $(DEPS)
+	icpc -m64 -DVMDUSESSE -fast -no-ipo -msse2 $(SRC) -o testiccsse -lm
+
+testicc : $(DEPS)
+	icpc -m64 -fast -no-ipo -msse2 $(SRC) -o testicc -lm
+
+testgccavx : $(DEPS)
+	g++ -m64 -DVMDUSESSE -DVMDUSEAVX -O3 -mavx $(SRC) -o testgccavx -lm
+
+testgccsse : $(DEPS)
+	g++ -m64 -DVMDUSESSE -O3 -msse2 $(SRC) -o testgccsse -lm
+
+testgcc : $(DEPS)
+	g++ -m64 -O3 -msse2 $(SRC) -o testgcc -lm
+
+test :
+	@echo "AVX/SSE test loops"
+	@echo "------------------"
+	-testiccavx	
+	-testgccavx	
+	-testiccsse
+	-testgccsse
+	-testicc
+	-testgcc
+
+clean :
+	rm -f $(BINS)
+
+	
