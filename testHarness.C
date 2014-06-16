@@ -13,6 +13,23 @@
 #include "omp.h"
 #include "cudaFloat.h"
 
+bool testCorrect(unsigned *output, int size) {
+    FILE* f = fopen("reference.out", "r");
+    if(!f) {printf("Could not open reference.out"); return false;}
+    for(int i = 0; i < size; i++) {
+        unsigned ref;
+        fscanf(f, "%u", &ref);
+        if(ref != output[i]) return false;        
+    }
+    return true;
+}
+
+void genReference(unsigned *output, int size) {
+    FILE* f = fopen("reference.out", "w");
+    for(int i = 0; i < size; i++) {
+        fprintf(f, "%u ", output[i]);
+    }
+}
 
 #ifdef __SSE2__
 static int hor_m128i(__m128i mask4) {
