@@ -1,0 +1,8 @@
+*~
+*.o
+CVS
+CVS/*
+*.mp4
+*.jpg
+ppms
+ppms/*
