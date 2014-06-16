@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
     float centerReal = 0.0f, centerImag = 0.0f;
     float size = 4.0;
     int steps = 864;
-    char filename[50] = "mandelbrot";
+    char filename[50] = "mandelbrot.ppm";
     bool bench = false;
 
     if (argc < 2) {
@@ -363,10 +363,8 @@ int main(int argc, char* argv[]) {
     #define COLORMAX 220
 
     // write picture data
-    char realFilename[60];
-    sprintf(realFilename, "ppms/%s%i.ppm", filename, frame);
-    printf("Writing %s\n", realFilename);
-    FILE* f = fopen(realFilename, "w");
+    printf("Writing %s\n", filename);
+    FILE* f = fopen(filename, "w");
     if (!f) { printf("Error opening file\n"); return(0); }
     fprintf(f, "P6\n%i %i\n255\n", horizsteps, steps);    
     unsigned char* buffer = (unsigned char*)malloc(3*numPixels*sizeof(unsigned char));
