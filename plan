@@ -29,7 +29,7 @@ Schedule =======================================================================
     Test harness - correctness measurement capabilities; test on the (existing) AVX intrinsics version vs serial
     Test harness - performance measurement    
     Multi-core OpenMP
-    Intrinsics - implemented and running for AVX            -- complete
+    Intrinsics - implemented and running for AVX            -- complete Fri 6/13
     Intrinsics - implemented and running for Phi
     Intrinsics - implemented and running for ARM, if applicable
     Intel compiler vectorization - implemented and running for AVX
