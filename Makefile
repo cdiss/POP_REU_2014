@@ -22,31 +22,31 @@ NUMFRAMES = 3000
 .C.o:
 	$(CXX) $(CXXFLAGS) -c $<
 
-OBJS = mandelbrot.o WKFUtils.o cudaFloat.o
+OBJS = testHarness.o WKFUtils.o cudaFloat.o
 
-all : mandelbrot
+all : testHarness
 
-mandelbrot : $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o mandelbrot $(CUDALIBS)
+testHarness : $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o testHarness $(CUDALIBS)
 
 runSerial : all
-	./mandelbrot serial
+	./testHarness serial
 	display mandelbrot.pgm
 
 runSSE2 : all
-	./mandelbrot SSE2
+	./testHarness SSE2
 	display mandelbrot.pgm
 
 runAVX : all
-	./mandelbrot AVX 
+	./testHarness AVX 
 	display mandelbrot.pgm
 
 runCUDA : all
-	./mandelbrot CUDA 
+	./testHarness CUDA 
 	display mandelbrot.pgm
 
 animate : all
-	./mandelbrot CUDA $(PARAMS)
+	./testHarness CUDA $(PARAMS)
 	foreach x (`seq 0 $(NUMFRAMES)`)
 	convert -quality 100 ppms/mandelbrot$x.ppm ppms/mandelbrot$x.jpg
 	rm -f ppms/mandelbrot$x.ppm
@@ -54,6 +54,6 @@ animate : all
 	ffmpeg -r 24 -b 1800 -i ppms/mandelbrot%d.jpg movie.mp4
 
 clean:	
-	rm -f $(OBJS) mandelbrot ppms/*.ppm ppms/*.jpg
+	rm -f $(OBJS) testHarness ppms/*.ppm ppms/*.jpg
 
 
