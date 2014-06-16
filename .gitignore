@@ -3,8 +3,10 @@
 CVS
 CVS/*
 *.mp4
+*.wmv
 *.jpg
 ppms
 ppms/*
 mandelbrot
 *.swp
+encodewmv43.sh

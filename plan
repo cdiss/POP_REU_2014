@@ -29,6 +29,8 @@ Schedule =======================================================================
     Test harness - correctness measurement capabilities; test on the (existing) AVX intrinsics version vs serial
     Test harness - performance measurement    
     Multi-core OpenMP
+    ISPC - implemented and running for AVX
+    ISPC - implemented and running for Phi
     Intrinsics - implemented and running for AVX            -- complete Fri 6/13
     Intrinsics - implemented and running for Phi
     Intrinsics - implemented and running for ARM, if applicable
@@ -36,8 +38,6 @@ Schedule =======================================================================
     Intel compiler vectorization - implemented and running for Phi
     OpenMP 3.0 directives - implemented and running for AVX
     OpenMP 3.0 directives - implemented and running for Phi
-    ISPC - implemented and running for AVX
-    ISPC - implemented and running for Phi
     GCC/Clang - implemented and running for ARM
     ISPC - implemented and running for ARM
     Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi
