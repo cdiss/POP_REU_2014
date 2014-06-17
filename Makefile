@@ -25,7 +25,6 @@ DEPS = kernelispc_ispc.h  # automatically generated below
 .c.o: $(DEPS)
 	$(CC) $(CCFLAGS) -c $<
 
-#.C.o: $(DEPS)
 %.o: %.C $(DEPS)
 	$(CXX) $(CXXFLAGS) -c $< 
 
@@ -49,5 +48,3 @@ runISPC : testHarness
 
 clean:	
 	rm -f $(OBJS) testHarness ppms/*.ppm ppms/*.jpg *~ *_ispc.h
-
-
