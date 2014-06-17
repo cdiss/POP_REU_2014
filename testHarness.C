@@ -261,7 +261,6 @@ int main(int argc, char* argv[]) {
     char filename[50] = "mandelbrot.ppm";
     unsigned maxIters = 20050;
     bool bench = false;
-    bool perfTest = true;
     bool initRefData = false;
 
     if (argc < 2) {
@@ -306,7 +305,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     }
-    if(perfTest) {
+    if(bench) {
         centerReal = -0.54f;
         centerImag = 0.5f;
         size = 0.1f;
@@ -414,7 +413,7 @@ int main(int argc, char* argv[]) {
         }
         printf("Performance:\nIters per second: %f\nGFLOPS: %f\nIters per pixel per second: %f\nMaximum iters per pixel: %u\nMinimum iters per pixel: %u\n", sum/time, sum/time*8/1000000000, (sum/numPixels)/time, iters_max, iters_min);
     } 
-    if (perfTest) {
+    if (bench) {
         double error = testCorrect(output, numPixels);
         if (error < 0) { printf("Aborting.\n"); return 0; }  // testCorrect failed to find the reference file
         printf("The percent error was %.3f%%. ", 100.0*error);
