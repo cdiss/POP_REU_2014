@@ -2,7 +2,7 @@
 CC = icc
 CFLAGS = -Wall -m64 -msse2 -O3 -g 
 CXX = icpc
-CXXFLAGS = -Wall -m64 -msse2 -O3 -g 
+CXXFLAGS = -Wall -m64 -mavx -O3 -g 
 CUDAHOME = /usr/local/encap/cuda-5.0
 CUDACC = $(CUDAHOME)/bin/nvcc
 CUDACCFLAGS = -m64 -g -arch sm_21
