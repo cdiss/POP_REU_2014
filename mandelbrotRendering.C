@@ -1,3 +1,12 @@
+// Usage:
+// [executable] CUDA -c -0.08887868 0.654803  (our latest coordinates)
+// foreach x (`seq 0 2999`)
+// convert -quality 100 ppms/mandelbrot$x.ppm ppms/mandelbrot$x.jpg
+// rm -f ppms/mandelbrot$x.ppm
+// end
+// then zero-pad the jpg filenames
+// then use encodewmv43.sh; its usage found in comment at top of that file
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

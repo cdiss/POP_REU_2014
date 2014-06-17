@@ -1,5 +1,6 @@
 *~
 *.o
+*_ispc.h
 CVS
 CVS/*
 *.mp4
@@ -8,5 +9,6 @@ CVS/*
 ppms
 ppms/*
 mandelbrot
+testHarness
 *.swp
 encodewmv43.sh
