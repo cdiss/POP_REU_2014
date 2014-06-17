@@ -12,16 +12,19 @@
 #include "WKFUtils.h"
 #include "omp.h"
 #include "cudaFloat.h"
+#include <math.h>
 
-bool testCorrect(unsigned *output, int size) {
+double testCorrect(unsigned *output, int size) {
+    double error = 0.0;
     FILE* f = fopen("reference.out", "r");
-    if(!f) {printf("Could not open reference.out"); return false;}
+    if(!f) {printf("Could not open reference.out\n"); return false;}
     for(int i = 0; i < size; i++) {
-        unsigned ref;
-        fscanf(f, "%u", &ref);
-        if(ref != output[i]) return false;        
+        int ref;
+        fscanf(f, "%i ", &ref);
+        error += (double)abs((ref - output[i]))/((double)ref);
     }
-    return true;
+    fclose(f);
+    return error/((double)size);
 }
 
 void genReference(unsigned *output, int size) {
@@ -29,7 +32,26 @@ void genReference(unsigned *output, int size) {
     for(int i = 0; i < size; i++) {
         fprintf(f, "%u ", output[i]);
     }
+    fclose(f);
 }
+
+unsigned* boxFilter(unsigned * output, int size, int horSize) {
+    int newSize = size-1;
+    int newHorSize = horSize-1;
+    int numPix = (newSize)*(newHorSize);
+    unsigned * filter = (unsigned*)malloc(numPix*sizeof(unsigned));
+    for(int i = 0; i < newSize; i++) {
+        for(int j = 0; j < newHorSize; j++) {
+            unsigned sum = output[i*horSize+j] + output[i*horSize+j+1] 
+                            + output[(i+1)*horSize+j] + output[(i+1)*horSize+j+1];
+            unsigned average = (sum+2)/4;
+            filter[i*newHorSize+j] = average;
+        }
+    }
+    free(output);
+    return filter;
+}
+
 
 #ifdef __SSE2__
 static int hor_m128i(__m128i mask4) {
@@ -228,10 +250,13 @@ void printUsage() {
 
 int main(int argc, char* argv[]) {
     float centerReal = 0.0f, centerImag = 0.0f;
-    float size = 4.0;
+    float size = 4.0f;
     int steps = 864;
     char filename[50] = "mandelbrot.ppm";
+    unsigned maxIters = 20050;
     bool bench = false;
+    bool perfTest = true;
+    bool initRefData = false;
 
     if (argc < 2) {
       printUsage();
@@ -273,7 +298,13 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     }
-    
+    if(perfTest) {
+        centerReal = -0.54f;
+        centerImag = 0.5f;
+        size = 0.1f;
+        steps = 864;
+        maxIters = 50000;
+    }
     if (sse2)
         // make steps divisible by 4
         while (steps % 4 != 0) steps++;
@@ -296,15 +327,23 @@ int main(int argc, char* argv[]) {
     wkf_timerhandle timer = wkf_timer_create();
 
 
-    unsigned maxIters = 20050;
     float startReal = centerReal - (horizsize/2.0f), startImag = centerImag + (size/2.0f);
     float stepsize = size/steps;
     float time;
- 
+    
+    if(initRefData) {
+        maxIters = 50000;
+        serialFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+        output = boxFilter(output, steps, horizsteps);
+        numPixels = (steps-1)*(horizsteps-1);
+        genReference(output, numPixels);
+        printf("At 5%% tolerance, the percent error was  %.3f%%.\n", 100.0*testCorrect(output, numPixels)); 
+        return 0;
+    }
     if (bench) {
         int warmUpRuns = 10;
         for (int i = 0; i < warmUpRuns; i++) {
-            serialFloat(0.0f, 0.0f, steps, horizsteps, 0.004f, output, 500);
+            serialFloat(-2.0f, 2.0f, steps, horizsteps, 0.004f, output, 500);
         }
     }
 
@@ -344,6 +383,8 @@ int main(int argc, char* argv[]) {
        
     }
 
+    output = boxFilter(output, steps--, horizsteps--);
+    numPixels = steps*horizsteps;
     // performance metrics
     if (bench) {
         uint64_t sum = 0;
@@ -357,6 +398,16 @@ int main(int argc, char* argv[]) {
         }
         printf("Performance:\nIters per second: %f\nGFLOPS: %f\nIters per pixel per second: %f\nMaximum iters per pixel: %u\nMinimum iters per pixel: %u\n", sum/time, sum/time*8/1000000000, (sum/numPixels)/time, iters_max, iters_min);
     } 
+    if (perfTest) {
+        double error = testCorrect(output, numPixels);
+        printf("The percent error was %.3f%%. ", 100.0*error);
+        if(error < 0.05) {
+            printf("Error within acceptable region.\n");
+        } else {
+            printf("Error outside acceptable region. Aborting.\n");
+            return 0;
+        }
+    }
 
     #define ITERS_CYCLE 100
     #define COLORMIN 0
