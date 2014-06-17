@@ -6,6 +6,7 @@ CVS/*
 *.mp4
 *.wmv
 *.jpg
+*.ppm
 ppms
 ppms/*
 mandelbrot
