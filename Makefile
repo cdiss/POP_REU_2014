@@ -19,6 +19,7 @@ ISPCFLAGS = -O2 --arch=x86-64
 
 OBJS_AVX = kernelispc_ispc_avx.o testHarness_avx.o WKFUtils.o #cudaFloat.o
 OBJS_SSE2 = kernelispc_ispc_sse2.o testHarness_sse2.o WKFUtils.o #cudaFloat.o
+OBJS_PHI = kernelispc_ispc_phi.o testHarness_phi.o WKFUtils_phi.o #cudaFloat.o
 ISPCDEPS_AVX = kernelispc_ispc_avx.h  # automatically generated below
 ISPCDEPS_SSE2 = kernelispc_ispc_sse2.h  # automatically generated below
 
@@ -39,12 +40,21 @@ ISPCDEPS_SSE2 = kernelispc_ispc_sse2.h  # automatically generated below
 %_ispc_sse2.h %_ispc_sse2.o: %.ispc
 	$(ISPC) $(ISPCFLAGS) --target=sse2-i32x4 $< -o $*_ispc_sse2.o -h $*_ispc_sse2.h
 
+%_ispc_phi.cpp : %.ispc	
+	$(ISPC) $(ISPCFLAGS) $< --emit-c++ --target=generic-16 -o $*_ispc_phi.cpp --c++-include-file=knc.h
+
 %_avx.o: %.C $(ISPCDEPS_AVX)
 	$(CXX) $(CXXFLAGS) -mavx -o $@ -c $<
 
 %_sse2.o: %.C $(ISPCDEPS_SSE2)
 	$(CXX) $(CXXFLAGS) -msse2 -o $@ -c $<
 
+%_phi.o: %.C
+	$(CXX) $(CXXFLAGS) -mmic -o $@ -c $<
+
+%_ispc_phi.o: %_ispc_phi.cpp
+	$(CXX) $(CXXFLAGS) -mmic -o $@ -c $<
+	
 default : all
 all : testHarnessAVX testHarnessSSE2
 
@@ -53,6 +63,9 @@ testHarnessAVX : $(OBJS_AVX)
 
 testHarnessSSE2 : $(OBJS_SSE2) 
 	$(CXX) $(CXXFLAGS) -msse2 $(OBJS_SSE2) -o $@ 
+
+testHarnessPhi.mic : $(OBJS_PHI)
+	$(CXX) $(CXXFLAGS) -mmic $(OBJS_PHI) -o $@
 
 runSerial : testHarnessSSE2
 	./testHarnessSSE2 serial -b
@@ -85,4 +98,4 @@ runALL : testHarnessSSE2 testHarnessAVX
 	@echo
 
 clean:	
-	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarnessAVX testHarnessSSE2 ppms/*.ppm ppms/*.jpg *~ 
+	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarness testHarnessAVX testHarnessSSE2 testHarnessPhi.mic ppms/*.ppm ppms/*.jpg *.ppm *~ 

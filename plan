@@ -26,10 +26,10 @@ GCC/Clang - Use compiler autovectorization and/or directives to compile for the 
 Schedule ======================================================================================================
 
     Test harness - make serial code work on Phi and through ISPC, GCC/Clang 
-    Test harness - correctness measurement capabilities; test on the (existing) AVX intrinsics version vs serial
-    Test harness - performance measurement    
+    Test harness - correctness measurement                  -- complete Tue 6/17
+    Test harness - performance measurement                  -- complete Wed 6/18
     Multi-core OpenMP
-    ISPC - implemented and running for AVX
+    ISPC - implemented and running for AVX                  -- complete Tue 6/17
     ISPC - implemented and running for Phi
     ISPC - implemented and running for ARM
     Intrinsics - implemented and running for AVX            -- complete Fri 6/13
