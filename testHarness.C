@@ -62,6 +62,30 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     return filter;
 }
 
+void serialOMP(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
+ 
+    for (int i = 0; i < steps; i++) {
+        #pragma omp parallel for
+        for (int j = 0; j < horizsteps; j++) {
+            float real = startReal + step*j;
+            float imag = startImag - step*i;
+            unsigned iters = 0;
+            float z_real = 0.0, z_imag = 0.0, z_sum = 0.0;
+            while (z_sum < 4.0f && iters < maxIters) {
+                iters++;
+                float z_real_sq = z_real*z_real;
+                float z_imag_sq = z_imag*z_imag;
+                z_sum = z_real_sq + z_imag_sq;
+                z_imag = 2.0*z_real*z_imag + imag;
+                z_real = z_real_sq - z_imag_sq + real;
+            }
+            #pragma omp critical 
+            {
+                output[i*horizsteps+j] = iters;
+            }
+        }
+    }
+}
 
 #ifdef __SSE2__
 static int hor_m128i(__m128i mask4) {
@@ -374,7 +398,12 @@ int main(int argc, char* argv[]) {
         wkf_timer_stop(timer);
         time = wkf_timer_time(timer);
         if(bench) printf("serialDouble: Time: %f\n", time);
-
+    
+        wkf_timer_start(timer); 
+        serialOMP(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+        wkf_timer_stop(timer);
+        time = wkf_timer_time(timer);
+        if(bench) printf("serialOMP: Time: %f\n", time);
     } else if (sse2) {
     
 #ifdef __SSE2__
