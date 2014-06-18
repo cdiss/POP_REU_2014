@@ -1,50 +1,88 @@
 
 CC = icc
-CFLAGS = -Wall -m64 -mavx -O3 
+CFLAGS = -Wall -m64 -O3 
 CXX = icpc
-CXXFLAGS = -Wall -m64 -mavx -O3 -openmp 
+CXXFLAGS = -Wall -m64 -O3 -openmp 
 CUDAHOME = /usr/local/encap/cuda-5.0
 CUDACC = $(CUDAHOME)/bin/nvcc
 CUDACCFLAGS = -m64 -arch sm_21
 CUDALIBS = -Bdynamic -Wl,-rpath,$(CUDAHOME)/lib64 -L$(CUDAHOME)/lib64 -lcudart 
 ISPC = ispc
-ISPCFLAGS8 = -O2 --arch=x86-64 --target=avx1-i32x8
-ISPCFLAGS16 = -O2 --arch=x86-64 --target=avx1-i32x16
+ISPCFLAGS = -O2 --arch=x86-64 
 
-OBJS = kernelispc_ispc.o testHarness.o WKFUtils.o cudaFloat.o
-DEPS = kernelispc_ispc.h  # automatically generated below
+# The performance difference between these two options should be tested at some point
+#ISPCFLAGS +=  --target=avx1-i32x8
+#ISPCFLAGS +=  --target=avx1-i32x16
+# Likewise, these two options for SSE2
+#ISPCFLAGS +=  --target=sse2-i32x4
+#ISPCFLAGS +=  --target=sse2-i32x8
+
+OBJS_AVX = kernelispc_ispc_avx.o testHarness_avx.o WKFUtils.o #cudaFloat.o
+OBJS_SSE2 = kernelispc_ispc_sse2.o testHarness_sse2.o WKFUtils.o #cudaFloat.o
+ISPCDEPS_AVX = kernelispc_ispc_avx.h  # automatically generated below
+ISPCDEPS_SSE2 = kernelispc_ispc_sse2.h  # automatically generated below
 
 .SUFFIXES: .C .c .cu ..c .i .o .ispc 
 
-.cu.o:
+%.o: %.cu $(DEPS)
 	$(CUDACC) $(CUDACCFLAGS) -c $<
 
-%_ispc.h %_ispc.o: %.ispc
-	$(ISPC) $(ISPCFLAGS8) $< -o $*_ispc.o -h $*_ispc.h
-
-.c.o: $(DEPS)
+%.o: %.c $(DEPS)
 	$(CC) $(CCFLAGS) -c $<
 
 %.o: %.C $(DEPS)
 	$(CXX) $(CXXFLAGS) -c $< 
 
-default : testHarness
-all : testHarness
+%_ispc_avx.h %_ispc_avx.o: %.ispc
+	$(ISPC) $(ISPCFLAGS) --target=avx1-i32x8 $< -o $*_ispc_avx.o -h $*_ispc_avx.h
 
-testHarness : $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(CUDALIBS)
+%_ispc_sse2.h %_ispc_sse2.o: %.ispc
+	$(ISPC) $(ISPCFLAGS) --target=sse2-i32x4 $< -o $*_ispc_sse2.o -h $*_ispc_sse2.h
 
-runSerial : testHarness
-	./testHarness serial
+%_avx.o: %.C $(ISPCDEPS_AVX)
+	$(CXX) $(CXXFLAGS) -mavx -o $@ -c $<
 
-runSSE2 : testHarness
-	./testHarness SSE2
+%_sse2.o: %.C $(ISPCDEPS_SSE2)
+	$(CXX) $(CXXFLAGS) -msse2 -o $@ -c $<
 
-runAVX : testHarness
-	./testHarness AVX 
+default : all
+all : testHarnessAVX testHarnessSSE2
 
-runISPC : testHarness
-	./testHarness ISPC
+testHarnessAVX : $(OBJS_AVX) 
+	$(CXX) $(CXXFLAGS) -mavx $(OBJS_AVX) -o $@ 
+
+testHarnessSSE2 : $(OBJS_SSE2) 
+	$(CXX) $(CXXFLAGS) -msse2 $(OBJS_SSE2) -o $@ 
+
+runSerial : testHarnessSSE2
+	./testHarnessSSE2 serial -b
+
+runSSE2_INTRIN : testHarnessSSE2
+	./testHarnessSSE2 SSE2 -b
+
+runAVX_INTRIN : testHarnessAVX
+	./testHarnessAVX AVX -b
+
+runSSE2_ISPC : testHarnessSSE2
+	./testHarnessSSE2 ISPC -b
+
+runAVX_ISPC : testHarnessAVX
+	./testHarnessAVX ISPC -b
+
+runALL : testHarnessSSE2 testHarnessAVX
+	@echo; echo
+	@echo "SSE2 using intrinsics"
+	@make runSSE2_INTRIN
+	@echo; echo
+	@echo "SSE2 using ISPC"
+	@make runSSE2_ISPC
+	@echo; echo
+	@echo "AVX using intrinsics"
+	@make runAVX_INTRIN
+	@echo; echo
+	@echo "AVX using ISPC"
+	@make runAVX_ISPC
+	@echo
 
 clean:	
-	rm -f $(OBJS) testHarness ppms/*.ppm ppms/*.jpg *~ *_ispc.h
+	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarnessAVX testHarnessSSE2 ppms/*.ppm ppms/*.jpg *~ 
