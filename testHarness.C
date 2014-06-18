@@ -315,7 +315,6 @@ int main(int argc, char* argv[]) {
         size = 0.1f;
         steps = 864;
         maxIters = 50000;
-        bench = true;
     }
     if (sse2)
         // make steps divisible by 4
@@ -357,6 +356,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < warmUpRuns; i++) {
             serialFloat(-2.0f, 2.0f, steps, horizsteps, 0.004f, output, 500);
         }
+        printf("======================\n");
     }
 
     if (serial) {

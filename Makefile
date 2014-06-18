@@ -55,29 +55,34 @@ testHarnessSSE2 : $(OBJS_SSE2)
 	$(CXX) $(CXXFLAGS) -msse2 $(OBJS_SSE2) -o $@ 
 
 runSerial : testHarnessSSE2
-	./testHarnessSSE2 serial
+	./testHarnessSSE2 serial -b
 
 runSSE2_INTRIN : testHarnessSSE2
-	./testHarnessSSE2 SSE2
+	./testHarnessSSE2 SSE2 -b
 
 runAVX_INTRIN : testHarnessAVX
-	./testHarnessAVX AVX
+	./testHarnessAVX AVX -b
 
 runSSE2_ISPC : testHarnessSSE2
-	./testHarnessSSE2 ISPC
+	./testHarnessSSE2 ISPC -b
 
 runAVX_ISPC : testHarnessAVX
-	./testHarnessAVX ISPC
+	./testHarnessAVX ISPC -b
 
 runALL : testHarnessSSE2 testHarnessAVX
-	echo "SSE2 using intrinsics\n\n"
-	make runSSE2_INTRIN
-	echo "SSE2 using ISPC\n\n"
-	make runSSE2_ISPC
-	echo "AVX using intrinsics\n\n"
-	make runAVX_INTRIN
-	echo "AVX using ISPC\n\n"
-	make runAVX_ISPC
+	@echo; echo
+	@echo "SSE2 using intrinsics"
+	@make runSSE2_INTRIN
+	@echo; echo
+	@echo "SSE2 using ISPC"
+	@make runSSE2_ISPC
+	@echo; echo
+	@echo "AVX using intrinsics"
+	@make runAVX_INTRIN
+	@echo; echo
+	@echo "AVX using ISPC"
+	@make runAVX_ISPC
+	@echo
 
 clean:	
 	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarnessAVX testHarnessSSE2 ppms/*.ppm ppms/*.jpg *~ 
