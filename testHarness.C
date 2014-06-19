@@ -63,26 +63,23 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
 }
 
 void serialOMP(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
- 
+    
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j++) {
             float real = startReal + step*j;
             float imag = startImag - step*i;
             unsigned iters = 0;
-            float z_real = 0.0, z_imag = 0.0, z_sum = 0.0;
+            float z_real = 0.0f, z_imag = 0.0f, z_sum = 0.0f;
             while (z_sum < 4.0f && iters < maxIters) {
                 iters++;
                 float z_real_sq = z_real*z_real;
                 float z_imag_sq = z_imag*z_imag;
                 z_sum = z_real_sq + z_imag_sq;
-                z_imag = 2.0*z_real*z_imag + imag;
+                z_imag = 2.0f*z_real*z_imag + imag;
                 z_real = z_real_sq - z_imag_sq + real;
-            }
-            #pragma omp critical 
-            {
-                output[i*horizsteps+j] = iters;
-            }
+            } 
+            output[i*horizsteps+j] = iters;
         }
     }
 }
@@ -135,8 +132,8 @@ void debugPrint_m256(__m256 reg) {
 
 void serialDouble(double startReal, double startImag, int steps, int horizsteps, double step, unsigned* output, unsigned maxIters) {
  
-    unsigned oindex = 0;
     for (int i = 0; i < steps; i++) {
+        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j++) {
             double real = startReal + step*j;
             double imag = startImag - step*i;
@@ -149,16 +146,16 @@ void serialDouble(double startReal, double startImag, int steps, int horizsteps,
                 z_sum = z_real_sq + z_imag_sq;
                 z_imag = 2.0*z_real*z_imag + imag;
                 z_real = z_real_sq - z_imag_sq + real;
-            } 
-            output[oindex++] = iters;
+            }
+            output[i*horizsteps+j] = iters;
         }
     }
 }
 
 void serialFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
     
-    unsigned oindex = 0;
     for (int i = 0; i < steps; i++) {
+        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j++) {
             float real = startReal + step*j;
             float imag = startImag - step*i;
@@ -172,7 +169,7 @@ void serialFloat(float startReal, float startImag, int steps, int horizsteps, fl
                 z_imag = 2.0f*z_real*z_imag + imag;
                 z_real = z_real_sq - z_imag_sq + real;
             } 
-            output[oindex++] = iters;
+            output[i*horizsteps+j] = iters;
         }
     }
 }
@@ -184,6 +181,7 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
 
     //#pragma omp parallel for
     for (int i = 0; i < steps; i++) {
+        #pragma omp parallel for schedule(guided)
         for (int j = 0; j < horizsteps; j+=4) {
             __m128 reals = _mm_set1_ps(startReal + step*j);
             __m128 deltas = _mm_set_ps(0.0f, step, 2.0f*step, 3.0f*step);
@@ -228,6 +226,7 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
     float maxitersfloat = (float)maxiters;
     //#pragma omp parallel for
     for (int i = 0; i < steps; i++) {
+        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j+=8) {
             __m256 reals = _mm256_set1_ps(startReal + step*j);
             __m256 deltas = _mm256_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step);
