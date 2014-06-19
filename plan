@@ -10,7 +10,7 @@ Test harness
 "Solutions" - Each must be implemented, performance compared using the harness
     Intel compiler vectorization - directives #ivdep, #vector, restrict keyword, -fnoalias compiler flag, others
         - use -vecreport perhaps? to see what the code was vectorized to
-    OpenMP 3.0 directives - similar to above except using OpenMP vectorization directives
+    OpenMP 4.0 directives - similar to above except using OpenMP vectorization directives
         - can still see what the code was vectorized to using -vecreport?
     Intrinsics - program directly the vectorized code
         - should be fastest
@@ -30,18 +30,18 @@ Schedule =======================================================================
     Test harness - performance measurement                  -- complete Wed 6/18
     Multi-core OpenMP
     ISPC - implemented and running for AVX                  -- complete Tue 6/17
-    ISPC - implemented and running for Phi
+    ISPC - implemented and running for Phi                  -- complete Wed 6/18
     ISPC - implemented and running for ARM
     Intrinsics - implemented and running for AVX            -- complete Fri 6/13
     Intrinsics - implemented and running for Phi
     Intrinsics - implemented and running for ARM, if applicable
     Intel compiler vectorization - implemented and running for AVX
     Intel compiler vectorization - implemented and running for Phi
-    OpenMP 3.0 directives - implemented and running for AVX
-    OpenMP 3.0 directives - implemented and running for Phi
+    OpenMP 4.0 directives - implemented and running for AVX
+    OpenMP 4.0 directives - implemented and running for Phi
     GCC/Clang - implemented and running for ARM
     Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi
-    OpenMP 3.0 directives - analysis and compare generated code? for AVX, Phi
+    OpenMP 4.0 directives - analysis and compare generated code? for AVX, Phi
     ISPC - analysis, compare generated code? for AVX, Phi
     ISPC - analysis, compare generated code for ARM IF we implemented intrinsics for ARM
 

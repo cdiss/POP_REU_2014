@@ -34,27 +34,30 @@ ISPCDEPS_SSE2 = kernelispc_ispc_sse2.h  # automatically generated below
 %.o: %.C $(DEPS)
 	$(CXX) $(CXXFLAGS) -c $< 
 
+# compiling ISPC files for AVX
 %_ispc_avx.h %_ispc_avx.o: %.ispc
 	$(ISPC) $(ISPCFLAGS) --target=avx1-i32x8 $< -o $*_ispc_avx.o -h $*_ispc_avx.h
 
+# compiling ISPC files for SSE2
 %_ispc_sse2.h %_ispc_sse2.o: %.ispc
 	$(ISPC) $(ISPCFLAGS) --target=sse2-i32x4 $< -o $*_ispc_sse2.o -h $*_ispc_sse2.h
 
-%_ispc_phi.cpp : %.ispc	
-	$(ISPC) $(ISPCFLAGS) $< --emit-c++ --target=generic-16 -o $*_ispc_phi.cpp --c++-include-file=knc.h
+# compiling ISPC files to C++ for Phi
+%_ispc_phi.C : %.ispc	
+	$(ISPC) $(ISPCFLAGS) $< --emit-c++ --target=generic-16 -o $*_ispc_phi.C --c++-include-file=knc.h
 
+# compiling C++ files for AVX
 %_avx.o: %.C $(ISPCDEPS_AVX)
 	$(CXX) $(CXXFLAGS) -mavx -o $@ -c $<
 
+# compiling C++ files for SSE2
 %_sse2.o: %.C $(ISPCDEPS_SSE2)
 	$(CXX) $(CXXFLAGS) -msse2 -o $@ -c $<
 
+# compiling C++ files for Phi
 %_phi.o: %.C
 	$(CXX) $(CXXFLAGS) -mmic -o $@ -c $<
 
-%_ispc_phi.o: %_ispc_phi.cpp
-	$(CXX) $(CXXFLAGS) -mmic -o $@ -c $<
-	
 default : all
 all : testHarnessAVX testHarnessSSE2
 
@@ -76,11 +79,17 @@ runSSE2_INTRIN : testHarnessSSE2
 runAVX_INTRIN : testHarnessAVX
 	./testHarnessAVX AVX -b
 
+runPHI_INTRIN : testHarnessPhi.mic
+	./testHarnessPhi.mic Phi -b
+
 runSSE2_ISPC : testHarnessSSE2
 	./testHarnessSSE2 ISPC -b
 
 runAVX_ISPC : testHarnessAVX
 	./testHarnessAVX ISPC -b
+
+runPHI_ISPC : testHarnessPhi.mic
+	./testHarnessPhi.mic ISPC -b
 
 runALL : testHarnessSSE2 testHarnessAVX
 	@echo; echo
@@ -98,4 +107,4 @@ runALL : testHarnessSSE2 testHarnessAVX
 	@echo
 
 clean:	
-	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarness testHarnessAVX testHarnessSSE2 testHarnessPhi.mic ppms/*.ppm ppms/*.jpg *.ppm *~ 
+	rm -f *.o $(ISPCDEPS_AVX) $(ISPCDEPS_SSE2) testHarness testHarnessAVX testHarnessSSE2 testHarnessPhi.mic ppms/*.ppm ppms/*.jpg *.ppm *~ *_ispc_phi.cpp *_ispc_phi.C 

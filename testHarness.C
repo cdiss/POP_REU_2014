@@ -8,6 +8,9 @@
 #ifdef __AVX__
 #include "immintrin.h"
 #endif
+#ifdef __MIC__
+#include "immintrin.h"
+#endif
 #include "WKFUtils.h"
 #include "intrinsicsUtils.C"
 #include "omp.h"
@@ -142,13 +145,10 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
                 z_reals = _mm_add_ps(_mm_sub_ps(z_real_sq, z_imag_sq), reals);
             }
             int startIndex = i*horizsteps+j;    
-            //#pragma omp critical
-            {
             output[startIndex++] = ((unsigned*)(&iters))[3];
             output[startIndex++] = ((unsigned*)(&iters))[2];
             output[startIndex++] = ((unsigned*)(&iters))[1];
             output[startIndex++] = ((unsigned*)(&iters))[0]; 
-            }
         }
     }
 }
@@ -160,7 +160,7 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
     float maxitersfloat = (float)maxiters;
     //#pragma omp parallel for
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(dynamic)
+        #pragma omp parallel for schedule(guided)
         for (int j = 0; j < horizsteps; j+=8) {
             __m256 reals = _mm256_set1_ps(startReal + step*j);
             __m256 deltas = _mm256_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step);
@@ -195,8 +195,6 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
                 z_reals = _mm256_add_ps(_mm256_sub_ps(z_real_sq, z_imag_sq), reals);
             }
             int startIndex = i*horizsteps+j;    
-            //#pragma omp critical
-            {
             output[startIndex++] = (unsigned)( ((float*)(&iters))[7] );
             output[startIndex++] = (unsigned)( ((float*)(&iters))[6] );
             output[startIndex++] = (unsigned)( ((float*)(&iters))[5] );
@@ -205,6 +203,47 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
             output[startIndex++] = (unsigned)( ((float*)(&iters))[2] );
             output[startIndex++] = (unsigned)( ((float*)(&iters))[1] );
             output[startIndex++] = (unsigned)( ((float*)(&iters))[0] ); 
+        }
+    }
+}
+#endif
+
+#ifdef __MIC__
+void phiFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, signed maxiters) {
+    
+    #pragma omp parallel for schedule(guided)
+    for (int i = 0; i < steps; i++) {
+        for (int j = 0; j < horizsteps; j+=16) {
+            __m512 reals = _mm512_set1_ps(startReal + step*j);
+            __m512 deltas = _mm512_setr_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step, 8.0f*step, 9.0f*step, 10.0f*step, 11.0f*step, 12.0f*step, 13.0f*step, 14.0f*step, 15.0f*step);
+            reals = _mm512_add_ps(reals, deltas);
+            __m512 imags = _mm512_set1_ps(startImag - step*i);
+            __m512i iters = _mm512_setzero_epi32();
+            __m512i maxIters = _mm512_set1_epi32(maxiters);
+            __m512 z_reals = _mm512_setzero_ps();
+            __m512 z_imags = _mm512_setzero_ps();
+            __m512 z_sums = _mm512_setzero_ps();
+            __mmask16 cmp_val = _mm512_int2mask(-1);
+            __m512 fours = _mm512_set1_ps(4.0f);
+            __m512 twos = _mm512_set1_ps(2.0f);
+            __m512i ones = _mm512_set1_epi32(1);
+            __m512 negativeFours = _mm512_set1_ps(-4.0f);
+            while ( (cmp_val)  &&  !(_mm512_cmpeq_epi32_mask(iters, maxIters)) ) {
+                /* iters++ */ iters = _mm512_mask_add_epi32(iters, cmp_val, iters, ones);
+                __m512 z_real_sq = _mm512_mul_ps(z_reals, z_reals);
+                __m512 z_imag_sq = _mm512_mul_ps(z_imags, z_imags);
+                z_sums = _mm512_add_ps(z_real_sq, z_imag_sq);
+                __mmask16 isLessThan4 = _mm512_cmplt_ps_mask(z_sums, fours);
+                // nle: not less than or equal (i.e. greater than)
+                __mmask16 isGtrThanNeg4 = _mm512_cmpnle_ps_mask(z_sums, negativeFours);  
+                cmp_val = _mm512_kand(isLessThan4, isGtrThanNeg4);
+                z_imags = _mm512_fmadd_ps(_mm512_mul_ps(twos, z_reals), z_imags, imags);
+                z_reals = _mm512_add_ps(_mm512_sub_ps(z_real_sq, z_imag_sq), reals);
+            }
+            int index = i*horizsteps+j;    
+            // does not need reversing because we used setr not set
+            for ( ; index < i*horizsteps+j + 16; index++ ) {
+                output[index] = ((unsigned*)(&iters))[index];
             }
         }
     }
@@ -236,10 +275,12 @@ int main(int argc, char* argv[]) {
     bool sse2 = false;
     bool avx = false;
     bool ispc = false;
+    bool phi = false;
     if (!strcmp(argv[1], "serial\0")) serial = true;
     else if (!strcmp(argv[1], "SSE2\0")) sse2 = true;
     else if (!strcmp(argv[1], "AVX\0")) avx = true;
     else if (!strcmp(argv[1], "ISPC\0")) ispc = true;
+    else if (!strcmp(argv[1], "Phi\0")) phi = true;
     else {
       printUsage();
       return 0;
@@ -281,6 +322,9 @@ int main(int argc, char* argv[]) {
     else if (avx)
         // make steps divisible by 8
         while (steps % 8 != 0) steps++;
+    else if (phi)
+        // make steps divisible by 16
+        while (steps % 16 != 0) steps++;
     
     int horizsteps = steps*16/9;
     if (horizsteps % 16 != 0) {
@@ -346,6 +390,16 @@ int main(int argc, char* argv[]) {
         if(bench) printf("avxFloat: Time: %f\n", time);
 #endif
        
+    } else if (phi) {
+
+#ifdef __MIC__
+        wkf_timer_start(timer);
+        phiFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+        wkf_timer_stop(timer);
+        time = wkf_timer_time(timer);
+        if(bench) printf("phiFloat: Time: %f\n", time);
+#endif
+   
     } else if (ispc) {
 
         wkf_timer_start(timer);
