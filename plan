@@ -28,7 +28,7 @@ Schedule =======================================================================
     Test harness - make serial code work on Phi and through ISPC, GCC/Clang 
     Test harness - correctness measurement                  -- complete Tue 6/17
     Test harness - performance measurement                  -- complete Wed 6/18
-    Multi-core OpenMP
+    Multi-core OpenMP                                       -- complete Thu 6/19
     ISPC - implemented and running for AVX                  -- complete Tue 6/17
     ISPC - implemented and running for Phi                  -- complete Wed 6/18
     ISPC - implemented and running for ARM
