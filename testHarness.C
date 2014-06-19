@@ -25,6 +25,17 @@ extern "C" {
     extern void ispcFloat(float startReal, float startImag, int32_t steps, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
 }
 
+extern "C" {
+    extern void ispcFloatOMP(float startReal, float startImag, int32_t i, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
+}
+
+void ispcOMP(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
+    #pragma omp parallel for schedule(dynamic)
+    for(int i = 0; i < steps; i++) {
+        ispcFloatOMP(startReal, startImag, i, horizsteps, step, output, maxiters);
+    }
+}
+
 double testCorrect(unsigned *output, int size) {
     double error = 0.0;
     FILE* f = fopen("reference.out", "r");
@@ -224,8 +235,6 @@ int main(int argc, char* argv[]) {
     bool bench = false;
     bool initRefData = false;
 
-    printf("Executing.\n");
-
     if (argc < 2) {
       printUsage();
       return 0;
@@ -349,7 +358,7 @@ int main(int argc, char* argv[]) {
     } else if (ispc) {
 
         wkf_timer_start(timer);
-        ispcFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+        ispcOMP(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
         wkf_timer_stop(timer);
         time = wkf_timer_time(timer);
         if(bench) printf("ispcFloat: Time: %f\n", time);
