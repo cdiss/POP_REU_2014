@@ -127,8 +127,7 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
     
     /* unsigned integer comparisons not available in SSE2 */
 
-    //#pragma omp parallel for
-    #pragma omp parallel for schedule(guided)
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
         for (int j = 0; j < horizsteps; j+=4) {
             __m128 reals = _mm_set1_ps(startReal + step*j);
@@ -169,13 +168,8 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
 void avxFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxiters) {
 
     float maxitersfloat = (float)maxiters;
-    //#pragma omp parallel for
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
-<<<<<<< HEAD
-        #pragma omp parallel for schedule(guided)
-=======
->>>>>>> 5c677317e64b2e96d1ffa09a6086a0af84c697d1
         for (int j = 0; j < horizsteps; j+=8) {
             __m256 reals = _mm256_set1_ps(startReal + step*j);
             __m256 deltas = _mm256_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step);
@@ -226,11 +220,11 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
 #ifdef __MIC__
 void phiFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, signed maxiters) {
     
-    #pragma omp parallel for schedule(guided)
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
         for (int j = 0; j < horizsteps; j+=16) {
             __m512 reals = _mm512_set1_ps(startReal + step*j);
-            __m512 deltas = _mm512_setr_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step, 8.0f*step, 9.0f*step, 10.0f*step, 11.0f*step, 12.0f*step, 13.0f*step, 14.0f*step, 15.0f*step);
+            __m512 deltas = _mm512_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step, 8.0f*step, 9.0f*step, 10.0f*step, 11.0f*step, 12.0f*step, 13.0f*step, 14.0f*step, 15.0f*step);
             reals = _mm512_add_ps(reals, deltas);
             __m512 imags = _mm512_set1_ps(startImag - step*i);
             __m512i iters = _mm512_setzero_epi32();
@@ -256,10 +250,22 @@ void phiFloat(float startReal, float startImag, int steps, int horizsteps, float
                 z_reals = _mm512_add_ps(_mm512_sub_ps(z_real_sq, z_imag_sq), reals);
             }
             int index = i*horizsteps+j;    
-            // does not need reversing because we used setr not set
-            for ( ; index < i*horizsteps+j + 16; index++ ) {
-                output[index] = ((unsigned*)(&iters))[index];
-            }
+            output[index++] = ((unsigned*)(&iters))[15];
+            output[index++] = ((unsigned*)(&iters))[14];
+            output[index++] = ((unsigned*)(&iters))[13];
+            output[index++] = ((unsigned*)(&iters))[12];
+            output[index++] = ((unsigned*)(&iters))[11];
+            output[index++] = ((unsigned*)(&iters))[10];
+            output[index++] = ((unsigned*)(&iters))[9];
+            output[index++] = ((unsigned*)(&iters))[8];
+            output[index++] = ((unsigned*)(&iters))[7];
+            output[index++] = ((unsigned*)(&iters))[6];
+            output[index++] = ((unsigned*)(&iters))[5];
+            output[index++] = ((unsigned*)(&iters))[4];
+            output[index++] = ((unsigned*)(&iters))[3];
+            output[index++] = ((unsigned*)(&iters))[2];
+            output[index++] = ((unsigned*)(&iters))[1];
+            output[index++] = ((unsigned*)(&iters))[0];
         }
     }
 }
@@ -283,7 +289,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    // parse serial|SSE2|AVX|ISPC
+    // parse serial|SSE2|AVX|ISPC|Phi
     bool serial = false;
     bool sse2 = false;
     bool avx = false;
