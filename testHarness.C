@@ -52,6 +52,7 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     int numPix = (newSize)*(newHorSize);
     unsigned * filter = (unsigned*)malloc(numPix*sizeof(unsigned));
     for(int i = 0; i < newSize; i++) {
+        #pragma omp parallel for
         for(int j = 0; j < newHorSize; j++) {
             unsigned sum = output[i*horSize+j] + output[i*horSize+j+1] 
                             + output[(i+1)*horSize+j] + output[(i+1)*horSize+j+1];
@@ -61,28 +62,6 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     }
     free(output);
     return filter;
-}
-
-void serialOMP(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
-    
-    for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(dynamic)
-        for (int j = 0; j < horizsteps; j++) {
-            float real = startReal + step*j;
-            float imag = startImag - step*i;
-            unsigned iters = 0;
-            float z_real = 0.0f, z_imag = 0.0f, z_sum = 0.0f;
-            while (z_sum < 4.0f && iters < maxIters) {
-                iters++;
-                float z_real_sq = z_real*z_real;
-                float z_imag_sq = z_imag*z_imag;
-                z_sum = z_real_sq + z_imag_sq;
-                z_imag = 2.0f*z_real*z_imag + imag;
-                z_real = z_real_sq - z_imag_sq + real;
-            } 
-            output[i*horizsteps+j] = iters;
-        }
-    }
 }
 
 void serialDouble(double startReal, double startImag, int steps, int horizsteps, double step, unsigned* output, unsigned maxIters) {
@@ -347,12 +326,6 @@ int main(int argc, char* argv[]) {
         time = wkf_timer_time(timer);
         if(bench) printf("serialFloat: Time: %f\n", time);
 
-        wkf_timer_start(timer); 
-        serialOMP(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("serialOMP: Time: %f\n", time);
-
     } else if (sse2) {
     
 #ifdef __SSE2__
@@ -389,6 +362,7 @@ int main(int argc, char* argv[]) {
     // performance metrics
     if (bench) {
         uint64_t sum = 0;
+        #pragma omp parallel for reduction(+:sum)
         for (int i = 0; i < numPixels; i++) {
             unsigned iters = output[i];
             sum += iters;
@@ -417,7 +391,7 @@ int main(int argc, char* argv[]) {
     if (!f) { printf("Error opening file\n"); return(0); }
     fprintf(f, "P6\n%i %i\n255\n", horizsteps, steps);    
     unsigned char* buffer = (unsigned char*)malloc(3*numPixels*sizeof(unsigned char));
-    int bufferIndex = 0;
+    #pragma omp parallel for 
     for (int i = 0; i < numPixels; i++) {
         int itersForColor = (maxIters-output[i]) % (ITERS_CYCLE*4);
         char red, green, blue;
@@ -449,9 +423,10 @@ int main(int argc, char* argv[]) {
                 printf("Error in color mapping\n");
                 break;
         }
+        int bufferIndex = i*3;
         buffer[bufferIndex++] = red;
         buffer[bufferIndex++] = green;
-        buffer[bufferIndex++] = blue;
+        buffer[bufferIndex] = blue;
     }
      
     fwrite(buffer, sizeof(unsigned char), 3*numPixels, f);
