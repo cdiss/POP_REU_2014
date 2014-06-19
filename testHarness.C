@@ -62,8 +62,8 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     int newHorSize = horSize-1;
     int numPix = (newSize)*(newHorSize);
     unsigned * filter = (unsigned*)malloc(numPix*sizeof(unsigned));
+    #pragma omp parallel for
     for(int i = 0; i < newSize; i++) {
-        #pragma omp parallel for
         for(int j = 0; j < newHorSize; j++) {
             unsigned sum = output[i*horSize+j] + output[i*horSize+j+1] 
                             + output[(i+1)*horSize+j] + output[(i+1)*horSize+j+1];
@@ -77,8 +77,8 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
 
 void serialDouble(double startReal, double startImag, int steps, int horizsteps, double step, unsigned* output, unsigned maxIters) {
  
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j++) {
             double real = startReal + step*j;
             double imag = startImag - step*i;
@@ -99,8 +99,8 @@ void serialDouble(double startReal, double startImag, int steps, int horizsteps,
 
 void serialFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
     
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j++) {
             float real = startReal + step*j;
             float imag = startImag - step*i;
@@ -125,8 +125,8 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
     /* unsigned integer comparisons not available in SSE2 */
 
     //#pragma omp parallel for
+    #pragma omp parallel for schedule(guided)
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(guided)
         for (int j = 0; j < horizsteps; j+=4) {
             __m128 reals = _mm_set1_ps(startReal + step*j);
             __m128 deltas = _mm_set_ps(0.0f, step, 2.0f*step, 3.0f*step);
@@ -170,8 +170,8 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
 
     float maxitersfloat = (float)maxiters;
     //#pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
-        #pragma omp parallel for schedule(dynamic)
         for (int j = 0; j < horizsteps; j+=8) {
             __m256 reals = _mm256_set1_ps(startReal + step*j);
             __m256 deltas = _mm256_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step);
