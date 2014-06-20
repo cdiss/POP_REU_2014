@@ -10,13 +10,6 @@ CUDALIBS = -Bdynamic -Wl,-rpath,$(CUDAHOME)/lib64 -L$(CUDAHOME)/lib64 -lcudart
 ISPC = ispc
 ISPCFLAGS = -O2 --arch=x86-64 
 
-# The performance difference between these two options should be tested at some point
-#ISPCFLAGS +=  --target=avx1-i32x8
-#ISPCFLAGS +=  --target=avx1-i32x16
-# Likewise, these two options for SSE2
-#ISPCFLAGS +=  --target=sse2-i32x4
-#ISPCFLAGS +=  --target=sse2-i32x8
-
 OBJS_AVX = kernelispc_ispc_avx.o testHarness_avx.o WKFUtils.o #cudaFloat.o
 OBJS_SSE2 = kernelispc_ispc_sse2.o testHarness_sse2.o WKFUtils.o #cudaFloat.o
 OBJS_PHI = kernelispc_ispc_phi.o testHarness_phi.o WKFUtils_phi.o #cudaFloat.o
@@ -35,12 +28,14 @@ ISPCDEPS_SSE2 = kernelispc_ispc_sse2.h  # automatically generated below
 	$(CXX) $(CXXFLAGS) -c $< 
 
 # compiling ISPC files for AVX
+# Can also use --target=avx1-i32x16 but I found that very much slower (consistently)
 %_ispc_avx.h %_ispc_avx.o: %.ispc
 	$(ISPC) $(ISPCFLAGS) --target=avx1-i32x8 $< -o $*_ispc_avx.o -h $*_ispc_avx.h
 
 # compiling ISPC files for SSE2
+# Can also use --target=sse2-i32x4 but I found that slightly slower (consistently)
 %_ispc_sse2.h %_ispc_sse2.o: %.ispc
-	$(ISPC) $(ISPCFLAGS) --target=sse2-i32x4 $< -o $*_ispc_sse2.o -h $*_ispc_sse2.h
+	$(ISPC) $(ISPCFLAGS) --target=sse2-i32x8 $< -o $*_ispc_sse2.o -h $*_ispc_sse2.h
 
 # compiling ISPC files to C++ for Phi
 %_ispc.C : %.ispc	
