@@ -143,7 +143,7 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
             __m128 fours = _mm_set1_ps(4.0f);
             __m128 twos = _mm_set1_ps(2.0f);
             __m128 negativeFours = _mm_set1_ps(-4.0f);
-            while ( hor_m128i(cmp_val)  &&  !hor_m128i(_mm_cmpeq_epi32(iters, maxIters)) ) {
+            while ( _mm_movemask_epi8(cmp_val)  &&  !_mm_movemask_epi8(_mm_cmpeq_epi32(iters, maxIters)) ) {
                 /* iters++ */ iters = _mm_sub_epi32(iters, cmp_val);
                 __m128 z_real_sq = _mm_mul_ps(z_reals, z_reals);
                 __m128 z_imag_sq = _mm_mul_ps(z_imags, z_imags);
