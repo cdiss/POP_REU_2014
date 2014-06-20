@@ -65,17 +65,23 @@ testHarnessSSE2 : $(OBJS_SSE2)
 testHarnessPhi.mic : $(OBJS_PHI)
 	$(CXX) $(CXXFLAGS) -mmic $(OBJS_PHI) -o $@
 
-runSerial : testHarnessSSE2
+runSSE2_serial : testHarnessSSE2
 	./testHarnessSSE2 serial -b
 
+runAVX_serial : testHarnessAVX
+	./testHarnessAVX serial -b
+
+runPHI_serial : testHarnessPhi.mic
+	./testHarnessPhi.mic serial -b
+
 runSSE2_INTRIN : testHarnessSSE2
-	./testHarnessSSE2 SSE2 -b
+	./testHarnessSSE2 intrin -b
 
 runAVX_INTRIN : testHarnessAVX
-	./testHarnessAVX AVX -b
+	./testHarnessAVX intrin -b
 
 runPHI_INTRIN : testHarnessPhi.mic
-	./testHarnessPhi.mic Phi -b
+	./testHarnessPhi.mic intrin -b
 
 runSSE2_ISPC : testHarnessSSE2
 	./testHarnessSSE2 ISPC -b
@@ -87,18 +93,25 @@ runPHI_ISPC : testHarnessPhi.mic
 	./testHarnessPhi.mic ISPC -b
 
 runALL : testHarnessSSE2 testHarnessAVX
-	@echo; echo
-	@echo "SSE2 using intrinsics"
+	@echo; echo; echo "Reference serial code"
+	@make runSSE2_serial
+	@echo; echo; echo "SSE2 using intrinsics"
 	@make runSSE2_INTRIN
-	@echo; echo
-	@echo "SSE2 using ISPC"
+	@echo; echo; echo "SSE2 using ISPC"
 	@make runSSE2_ISPC
-	@echo; echo
-	@echo "AVX using intrinsics"
+	@echo; echo; echo "AVX using intrinsics"
 	@make runAVX_INTRIN
-	@echo; echo
-	@echo "AVX using ISPC"
+	@echo; echo; echo "AVX using ISPC"
 	@make runAVX_ISPC
+	@echo
+
+runALLPhi : testHarnessPhi.mic
+	@echo; echo; echo "Reference serial code"
+	@make runPHI_serial
+	@echo; echo; echo "Intrinsics"
+	@make runPHI_INTRIN
+	@echo; echo; echo "ISPC"
+	@make runPHI_ISPC
 	@echo
 
 clean:	

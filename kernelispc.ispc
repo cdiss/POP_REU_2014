@@ -1,4 +1,6 @@
-export void ispcFloat(uniform float startReal, uniform float startImag, uniform int32 steps, uniform int32 horizsteps, uniform float step, uniform unsigned int32 * uniform output, uniform unsigned int32 maxiters) {
+// This function implements the entire kernel.
+// Compare with ispcMandel_inner (and note) below
+export void ispcMandel_entire(uniform float startReal, uniform float startImag, uniform int32 steps, uniform int32 horizsteps, uniform float step, uniform unsigned int32 * uniform output, uniform unsigned int32 maxiters) {
     
     foreach(i = 0 ... steps, j = 0 ... horizsteps) {
         float real = startReal + step*j;
@@ -18,7 +20,9 @@ export void ispcFloat(uniform float startReal, uniform float startImag, uniform 
     }
 }
 
-export void ispcFloatOMP(uniform float startReal, uniform float startImag, uniform int32 i, uniform int32 horizsteps, uniform float step, uniform unsigned int32 * uniform output, uniform unsigned int32 maxiters) {
+// This function implements only the inner loop.
+// This way we can use the OMP-parallelized outer loop in the wrapper function "ispcMandel" in the main code to parallelize across threads, while ISPC is doing all of the vectorization inside the inner loop
+export void ispcMandel_inner(uniform float startReal, uniform float startImag, uniform int32 i, uniform int32 horizsteps, uniform float step, uniform unsigned int32 * uniform output, uniform unsigned int32 maxiters) {
     
     foreach(j = 0 ... horizsteps) {
         float real = startReal + step*j;

@@ -23,20 +23,9 @@
 #endif
 
 // this function prototype should be included in the auto-generated include file above.
-// Despite the fact that is indeed included there, for some reason the code does not recognize "ispcFloat" unless this prototype is included directly here.
+// Despite the fact that is indeed included there, for some reason the code does not recognize "ispcMandel_inner" unless this prototype is included directly here.
 extern "C" {
-    extern void ispcFloat(float startReal, float startImag, int32_t steps, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
-}
-
-extern "C" {
-    extern void ispcFloatOMP(float startReal, float startImag, int32_t i, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
-}
-
-void ispcOMP(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
-    #pragma omp parallel for schedule(dynamic)
-    for(int i = 0; i < steps; i++) {
-        ispcFloatOMP(startReal, startImag, i, horizsteps, step, output, maxiters);
-    }
+    extern void ispcMandel_inner(float startReal, float startImag, int32_t steps, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
 }
 
 double testCorrect(unsigned *output, int size) {
@@ -78,7 +67,7 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     return filter;
 }
 
-void serialDouble(double startReal, double startImag, int steps, int horizsteps, double step, unsigned* output, unsigned maxIters) {
+void serialMandel_double(double startReal, double startImag, int steps, int horizsteps, double step, unsigned* output, unsigned maxIters) {
  
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
@@ -100,7 +89,7 @@ void serialDouble(double startReal, double startImag, int steps, int horizsteps,
     }
 }
 
-void serialFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
+void serialMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
     
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
@@ -122,9 +111,12 @@ void serialFloat(float startReal, float startImag, int steps, int horizsteps, fl
     }
 }
 
-#ifdef __SSE2__
-void sse2Float(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, signed maxiters) {
+void intrinsicsMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, signed maxiters) {
     
+#ifdef __SSE2__
+#ifndef __AVX__
+// Use SSE2 intrinsics
+
     /* unsigned integer comparisons not available in SSE2 */
 
     #pragma omp parallel for schedule(dynamic)
@@ -161,11 +153,9 @@ void sse2Float(float startReal, float startImag, int steps, int horizsteps, floa
             output[startIndex++] = ((unsigned*)(&iters))[0]; 
         }
     }
-}
-#endif
 
-#ifdef __AVX__
-void avxFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxiters) {
+#else
+// Use AVX intrinsics
 
     float maxitersfloat = (float)maxiters;
     #pragma omp parallel for schedule(dynamic)
@@ -214,12 +204,12 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
             output[startIndex++] = ((unsigned*)(&iters))[0]; 
         }
     }
-}
-#endif
 
+#endif
+#else  // #ifndef __SSE2__
 #ifdef __MIC__
-void phiFloat(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, signed maxiters) {
-    
+// Use Phi intrinsics
+
     #pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < steps; i++) {
         for (int j = 0; j < horizsteps; j+=16) {
@@ -268,11 +258,21 @@ void phiFloat(float startReal, float startImag, int steps, int horizsteps, float
             output[index++] = ((unsigned*)(&iters))[0];
         }
     }
+
+#endif   // #ifdef __MIC__
+#endif   // #ifdef __SSE2__
+
+}  // end function intrinsicsMandel
+
+void ispcMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
+    #pragma omp parallel for schedule(dynamic)
+    for(int i = 0; i < steps; i++) {
+        ispcMandel_inner(startReal, startImag, i, horizsteps, step, output, maxiters);
+    }
 }
-#endif
 
 void printUsage() {
-    printf("Usage: testHarness serial|SSE2|AVX|ISPC -c centerReal centerImag -s size -d steps -f filename -b\n");
+    printf("Usage: testHarness serial|intrin|ISPC -c centerReal centerImag -s size -d steps -f filename -b\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -282,6 +282,8 @@ int main(int argc, char* argv[]) {
     char filename[50] = "mandelbrot.ppm";
     unsigned maxIters = 20050;
     bool bench = false;
+
+    // change to true, compile & run to create reference.out
     bool initRefData = false;
 
     if (argc < 2) {
@@ -289,22 +291,19 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    // parse serial|SSE2|AVX|ISPC|Phi
+    // parse serial|intrin|ISPC
     bool serial = false;
-    bool sse2 = false;
-    bool avx = false;
+    bool intrin = false;
     bool ispc = false;
-    bool phi = false;
     if (!strcmp(argv[1], "serial\0")) serial = true;
-    else if (!strcmp(argv[1], "SSE2\0")) sse2 = true;
-    else if (!strcmp(argv[1], "AVX\0")) avx = true;
+    else if (!strcmp(argv[1], "intrin\0")) intrin = true;
     else if (!strcmp(argv[1], "ISPC\0")) ispc = true;
-    else if (!strcmp(argv[1], "Phi\0")) phi = true;
     else {
       printUsage();
       return 0;
     }
 
+    // parse all other command line args
     int counter = 2;
     while ( counter < argc ) {
         if (!strcmp(argv[counter], "-c\0") && argc >= (counter + 3)) {
@@ -328,6 +327,8 @@ int main(int argc, char* argv[]) {
             return 0;
         }
     }
+
+    // Standardized benchmarking test parameters
     if(bench) {
         centerReal = -0.54f;
         centerImag = 0.5f;
@@ -335,16 +336,23 @@ int main(int argc, char* argv[]) {
         steps = 864;
         maxIters = 50000;
     }
-    if (sse2)
+
+    if (intrin)
+#ifdef __SSE2__
+#ifndef __AVX__
         // make steps divisible by 4
         while (steps % 4 != 0) steps++;
-    else if (avx)
+#else // #ifdef __AVX__
         // make steps divisible by 8
         while (steps % 8 != 0) steps++;
-    else if (phi)
+#endif
+#else // #ifndef __SSE2__
+#ifdef __MIC__
         // make steps divisible by 16
         while (steps % 16 != 0) steps++;
-    
+#endif // __MIC__
+#endif // __SSE2__
+
     int horizsteps = steps*16/9;
     if (horizsteps % 16 != 0) {
         printf("Use one of these numbers of steps: 576, 864, 1152, 1440, 1728, 2304\n");
@@ -354,84 +362,44 @@ int main(int argc, char* argv[]) {
 
     int numPixels = steps*horizsteps;
     unsigned* output = (unsigned*)malloc(numPixels*sizeof(unsigned));
-    
     float horizsize = size*16.0f/9.0f;
-
-    wkf_timerhandle timer = wkf_timer_create();
-
-
     float startReal = centerReal - (horizsize/2.0f), startImag = centerImag + (size/2.0f);
     float stepsize = size/steps;
     float time;
     
     if(initRefData) {
         maxIters = 50000;
-        serialFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+        serialMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
         output = boxFilter(output, steps, horizsteps);
         numPixels = (steps-1)*(horizsteps-1);
         genReference(output, numPixels);
         printf("At 5%% tolerance, the percent error was  %.3f%%.\n", 100.0*testCorrect(output, numPixels)); 
         return 0;
     }
+
     if (bench) {
         int warmUpRuns = 10;
         for (int i = 0; i < warmUpRuns; i++) {
-            serialFloat(-2.0f, 2.0f, steps, horizsteps, 0.004f, output, 500);
+            serialMandel(-2.0f, 2.0f, steps, horizsteps, 0.004f, output, 500);
         }
         printf("======================\n");
     }
 
-    if (serial) {
+    // MAIN TEST RUN
+    wkf_timerhandle timer = wkf_timer_create();
+    wkf_timer_start(timer); 
+    if (serial) serialMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    if (intrin) intrinsicsMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    if (ispc) ispcMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    wkf_timer_stop(timer);
+    time = wkf_timer_time(timer);
+    if(bench) printf("Time: %f\n", time);
 
-        wkf_timer_start(timer); 
-        serialFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("serialFloat: Time: %f\n", time);
-
-    } else if (sse2) {
-    
-#ifdef __SSE2__
-        wkf_timer_start(timer); 
-        sse2Float(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("sse2Float: Time: %f\n", time);
-#endif
-
-    } else if (avx) {
-       
-#ifdef __AVX__
-        wkf_timer_start(timer);
-        avxFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("avxFloat: Time: %f\n", time);
-#endif
-       
-    } else if (phi) {
-
-#ifdef __MIC__
-        wkf_timer_start(timer);
-        phiFloat(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("phiFloat: Time: %f\n", time);
-#endif
-   
-    } else if (ispc) {
-
-        wkf_timer_start(timer);
-        ispcOMP(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-        wkf_timer_stop(timer);
-        time = wkf_timer_time(timer);
-        if(bench) printf("ispcFloat: Time: %f\n", time);
-
-    }
-
+    // box filter algorithm
     output = boxFilter(output, steps--, horizsteps--);
     int oldNumPixels = numPixels;
     numPixels = steps*horizsteps;
+
     // performance metrics
     if (bench) {
         uint64_t sum = 0;
@@ -442,6 +410,8 @@ int main(int argc, char* argv[]) {
         }
         printf("Iters per second: %f\nGFLOPS: %f\nIters per pixel per second: %f\n", sum/time, sum/time*8/1000000000, (sum/oldNumPixels)/time);
     } 
+
+    // correctness test
     if (bench) {
         double error = testCorrect(output, numPixels);
         if (error < 0) { printf("Aborting.\n"); return 0; }  // testCorrect failed to find the reference file
