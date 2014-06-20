@@ -26,6 +26,11 @@ static bool hor_m256(__m256 mask8) {
     __m128 hor = _mm_or_ps(lo, hi);
     return !(_mm_cvtss_f32(hor) == 0);
 }
+
+static bool hor_m256i(__m256i mask8i) {
+    __m256 mask8 = _mm256_castsi256_ps(mask8i);
+    return hor_m256(mask8);
+}
 #endif
 
 #ifdef __SSE2__

@@ -25,7 +25,7 @@ GCC/Clang - Use compiler autovectorization and/or directives to compile for the 
 
 Schedule ======================================================================================================
 
-    Test harness - make serial code work on Phi, on ARM and through ISPC 
+    Test harness - make serial code work on Phi, on ARM and through ISPC   -- complete
     Test harness - correctness measurement                  -- complete Tue 6/17
     Test harness - performance measurement                  -- complete Wed 6/18
     Multi-core OpenMP                                       -- complete Thu 6/19
@@ -34,16 +34,17 @@ Schedule =======================================================================
     ISPC - implemented and running for ARM
     Intrinsics - implemented and running for AVX            -- complete Fri 6/13
     Intrinsics - implemented and running for Phi            -- complete Thu 6/19
-    Intrinsics - implemented and running for ARM, if applicable
-    Intel compiler vectorization - implemented and running for AVX
+    Intrinsics - implemented and running for ARM            -- complete Fri 6/20
+    Intel compiler vectorization - implemented and running for AVX   -- fails to vectorize Mandelbrot kernel even when forced
     Intel compiler vectorization - implemented and running for Phi
-    OpenMP 4.0 directives - implemented and running for AVX
+    OpenMP 4.0 directives - implemented and running for AVX          -- fails to vectorize Mandelbrot kernel even when forced
     OpenMP 4.0 directives - implemented and running for Phi
-    GCC/Clang - implemented and running for ARM
-    Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi
-    OpenMP 4.0 directives - analysis and compare generated code? for AVX, Phi
-    ISPC - analysis, compare generated code? for AVX, Phi
-    ISPC - analysis, compare generated code for ARM IF we implemented intrinsics for ARM
+    GCC/Clang - implemented and running for ARM             -- complete Fri 6/20
+    Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi   -- Intel compiler failed to vectorize
+    OpenMP 4.0 directives - analysis and compare generated code? for AVX, Phi   -- OpenMP 4.0 failed to vectorize
+    ISPC - analysis, compare generated code? for AVX
+    ISPC - analysis, compare generated code? for Phi
+    ISPC - analysis, compare generated code for ARM
 
     Overall performance analysis - where is the bottleneck on various systems, is performance what we expect, etc
 

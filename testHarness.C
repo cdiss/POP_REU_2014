@@ -175,43 +175,43 @@ void avxFloat(float startReal, float startImag, int steps, int horizsteps, float
             __m256 deltas = _mm256_set_ps(0.0f, step, 2.0f*step, 3.0f*step, 4.0f*step, 5.0f*step, 6.0f*step, 7.0f*step);
             reals = _mm256_add_ps(reals, deltas);
             __m256 imags = _mm256_set1_ps(startImag - step*i);
-            __m256 iters = _mm256_setzero_ps();
+            __m256i iters = _mm256_setzero_si256();
             __m256 maxIters = _mm256_set1_ps(maxitersfloat);
             __m256 z_reals = _mm256_setzero_ps();
             __m256 z_imags = _mm256_setzero_ps();
             __m256 z_sums = _mm256_setzero_ps();
-            __m256 cmp_val = _mm256_castsi256_ps(_mm256_set1_epi32(-1));
+            __m256i cmp_val = _mm256_set1_epi32(-1);
             __m256 fours = _mm256_set1_ps(4.0f);
             __m256 twos = _mm256_set1_ps(2.0f);
             __m256 negativeFours = _mm256_set1_ps(-4.0f);
-            while ( hor_m256(cmp_val)  &&  !hor_m256(_mm256_cmp_ps(iters, maxIters, _CMP_GE_OQ)) ) {
+            while ( _mm256_movemask_ps(_mm256_castsi256_ps(cmp_val)) && !_mm256_movemask_ps(_mm256_cmp_ps(_mm256_cvtepi32_ps(iters), maxIters, _CMP_GE_OQ)) ) { 
                 // iters++ performed by using integer ops separately on the halves of iters
-                __m128 itershalf0 = _mm256_extractf128_ps(iters, 0);  // half of iters
-                __m128 itershalf1 = _mm256_extractf128_ps(iters, 1);  // other half
-                __m128 cmpvalhalf0 = _mm256_extractf128_ps(cmp_val, 0);
-                __m128 cmpvalhalf1 = _mm256_extractf128_ps(cmp_val, 1);
-                itershalf0 = _mm_cvtepi32_ps(_mm_sub_epi32(_mm_cvtps_epi32(itershalf0), _mm_castps_si128(cmpvalhalf0)));
-                itershalf1 = _mm_cvtepi32_ps(_mm_sub_epi32(_mm_cvtps_epi32(itershalf1), _mm_castps_si128(cmpvalhalf1)));
-                iters = _mm256_insertf128_ps(iters, itershalf0, 0); // reassemble iters
-                iters = _mm256_insertf128_ps(iters, itershalf1, 1);    
+                __m128i itershalf0 = _mm256_extractf128_si256(iters, 0);  // half of iters
+                __m128i itershalf1 = _mm256_extractf128_si256(iters, 1);  // other half
+                __m128i cmpvalhalf0 = _mm256_extractf128_si256(cmp_val, 0);
+                __m128i cmpvalhalf1 = _mm256_extractf128_si256(cmp_val, 1);
+                itershalf0 = _mm_sub_epi32(itershalf0, cmpvalhalf0);
+                itershalf1 = _mm_sub_epi32(itershalf1, cmpvalhalf1);
+                iters = _mm256_insertf128_si256(iters, itershalf0, 0); // reassemble iters
+                iters = _mm256_insertf128_si256(iters, itershalf1, 1);    
                 __m256 z_real_sq = _mm256_mul_ps(z_reals, z_reals);
                 __m256 z_imag_sq = _mm256_mul_ps(z_imags, z_imags);
                 z_sums = _mm256_add_ps(z_real_sq, z_imag_sq);
                 __m256 isLessThan4 = _mm256_cmp_ps(z_sums, fours, _CMP_LT_OQ);
                 __m256 isGtrThanNeg4 = _mm256_cmp_ps(z_sums, negativeFours, _CMP_GT_OQ);
-                cmp_val = _mm256_and_ps(isLessThan4, isGtrThanNeg4);
+                cmp_val = _mm256_castps_si256(_mm256_and_ps(isLessThan4, isGtrThanNeg4));
                 z_imags = _mm256_add_ps(_mm256_mul_ps(_mm256_mul_ps(twos, z_reals), z_imags), imags);
                 z_reals = _mm256_add_ps(_mm256_sub_ps(z_real_sq, z_imag_sq), reals);
             }
             int startIndex = i*horizsteps+j;    
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[7] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[6] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[5] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[4] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[3] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[2] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[1] );
-            output[startIndex++] = (unsigned)( ((float*)(&iters))[0] ); 
+            output[startIndex++] = ((unsigned*)(&iters))[7];
+            output[startIndex++] = ((unsigned*)(&iters))[6];
+            output[startIndex++] = ((unsigned*)(&iters))[5];
+            output[startIndex++] = ((unsigned*)(&iters))[4];
+            output[startIndex++] = ((unsigned*)(&iters))[3];
+            output[startIndex++] = ((unsigned*)(&iters))[2];
+            output[startIndex++] = ((unsigned*)(&iters))[1];
+            output[startIndex++] = ((unsigned*)(&iters))[0]; 
         }
     }
 }
