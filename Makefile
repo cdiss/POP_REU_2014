@@ -83,6 +83,15 @@ runAVX_INTRIN : testHarnessAVX
 runPHI_INTRIN : testHarnessPhi.mic
 	./testHarnessPhi.mic intrin -b
 
+runSSE2_INTEL : testHarnessSSE2
+	./testHarnessSSE2 intel -b
+
+runAVX_INTEL : testHarnessAVX
+	./testHarnessAVX intel -b
+
+runPHI_INTEL : testHarnessPhi.mic
+	./testHarnessPhi.mic intel -b
+
 runSSE2_ISPC : testHarnessSSE2
 	./testHarnessSSE2 ISPC -b
 
@@ -97,10 +106,14 @@ runALL : testHarnessSSE2 testHarnessAVX
 	@make runSSE2_serial
 	@echo; echo; echo "SSE2 using intrinsics"
 	@make runSSE2_INTRIN
+	@echo; echo; echo "SSE2 using Intel compiler vectorization"
+	@make runSSE2_INTEL
 	@echo; echo; echo "SSE2 using ISPC"
 	@make runSSE2_ISPC
 	@echo; echo; echo "AVX using intrinsics"
 	@make runAVX_INTRIN
+	@echo; echo; echo "AVX using Intel compiler vectorization"
+	@make runAVX_INTEL
 	@echo; echo; echo "AVX using ISPC"
 	@make runAVX_ISPC
 	@echo
@@ -110,6 +123,8 @@ runALLPhi : testHarnessPhi.mic
 	@make runPHI_serial
 	@echo; echo; echo "Intrinsics"
 	@make runPHI_INTRIN
+	@echo; echo; echo "Intel compiler vectorization"
+	@make runPHI_INTEL
 	@echo; echo; echo "ISPC"
 	@make runPHI_ISPC
 	@echo
