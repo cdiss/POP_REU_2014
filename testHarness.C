@@ -231,11 +231,19 @@ void intrinsicsMandel(float startReal, float startImag, int steps, int horizstep
                 /* iters++ */ iters = _mm512_mask_add_epi32(iters, cmp_val, iters, ones);
                 __m512 z_real_sq = _mm512_mul_ps(z_reals, z_reals);
                 __m512 z_imag_sq = _mm512_mul_ps(z_imags, z_imags);
-                z_sums = _mm512_add_ps(z_real_sq, z_imag_sq);
-                __mmask16 isLessThan4 = _mm512_cmplt_ps_mask(z_sums, fours);
+                z_sums = _mm512_mask_add_ps(z_sums, cmp_val, z_real_sq, z_imag_sq);
+               
+                // Option 1
+                // __mmask16 isLessThan4 = _mm512_cmplt_ps_mask(z_sums, fours);
                 // nle: not less than or equal (i.e. greater than)
-                __mmask16 isGtrThanNeg4 = _mm512_cmpnle_ps_mask(z_sums, negativeFours);  
-                cmp_val = _mm512_kand(isLessThan4, isGtrThanNeg4);
+                // __mmask16 isGtrThanNeg4 = _mm512_cmpnle_ps_mask(z_sums, negativeFours); 
+                // cmp_val = _mm512_kand(isLessThan4, isGtrThanNeg4);
+                
+                // Option 2
+                // Only the <4 comparison is needed because we are doing masked adds to z_sums 
+                // (in Phi architecture masked add is same cost as add)
+                cmp_val = _mm512_cmplt_ps_mask(z_sums, fours);
+               
                 z_imags = _mm512_fmadd_ps(_mm512_mul_ps(twos, z_reals), z_imags, imags);
                 z_reals = _mm512_add_ps(_mm512_sub_ps(z_real_sq, z_imag_sq), reals);
             }
