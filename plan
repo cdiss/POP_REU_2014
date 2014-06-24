@@ -35,13 +35,13 @@ Schedule =======================================================================
     Intrinsics - implemented and running for AVX            -- complete Fri 6/13
     Intrinsics - implemented and running for Phi            -- complete Thu 6/19
     Intrinsics - implemented and running for ARM            -- complete Fri 6/20
-    Intel compiler vectorization - implemented and running for AVX   -- fails to vectorize Mandelbrot kernel even when forced
-    Intel compiler vectorization - implemented and running for Phi
-    OpenMP 4.0 directives - implemented and running for AVX          -- fails to vectorize Mandelbrot kernel even when forced
+    Intel compiler vectorization - implemented and running for AVX   -- complete Mon 6/23
+    Intel compiler vectorization - implemented and running for Phi   -- complete Mon 6/23
+    OpenMP 4.0 directives - implemented and running for AVX          -- complete Tue 6/24 
     OpenMP 4.0 directives - implemented and running for Phi
     GCC/Clang - implemented and running for ARM             -- complete Fri 6/20
-    Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi   -- Intel compiler failed to vectorize
-    OpenMP 4.0 directives - analysis and compare generated code? for AVX, Phi   -- OpenMP 4.0 failed to vectorize
+    Intel compiler vectorization - analysis, compare generated code using assembly for AVX, Phi  
+    OpenMP 4.0 directives - analysis and compare generated code? for AVX, Phi  
     ISPC - analysis, compare generated code? for AVX
     ISPC - analysis, compare generated code? for Phi
     ISPC - analysis, compare generated code for ARM

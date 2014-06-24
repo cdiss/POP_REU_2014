@@ -201,6 +201,7 @@ void intrinsicsMandel(float startReal, float startImag, int steps, int horizstep
 #if UNROLL_FACTOR > 1
             __m128i iters_old = _mm_setzero_si128();
             __m128 z_reals_old, z_imags_old, z_sums_old;
+            __m128i cmp_val_old;
             __m128i unroll_factors = _mm_set1_epi32(UNROLL_FACTOR);
 #endif
             while ( _mm_movemask_epi8(cmp_val)  &&  !_mm_movemask_epi8(_mm_cmpeq_epi32(iters, maxIters)) ) {
@@ -209,6 +210,7 @@ void intrinsicsMandel(float startReal, float startImag, int steps, int horizstep
                 z_reals_old = z_reals;
                 z_imags_old = z_imags;
                 z_sums_old = z_sums;
+                cmp_val_old = cmp_val;
 #endif
 
 #if UNROLL_FACTOR == 1
@@ -270,6 +272,7 @@ z_reals = _mm_add_ps(_mm_sub_ps(z_real_sq, z_imag_sq), reals);
             z_reals = z_reals_old;
             z_imags = z_imags_old;
             z_sums = z_sums_old;
+            cmp_val = cmp_val_old;
             while ( _mm_movemask_epi8(cmp_val) && !_mm_movemask_epi8(_mm_cmpeq_epi32(iters, maxIters)) ) {
                 /* iters++ */ iters = _mm_sub_epi32(iters, cmp_val);
                 __m128 z_real_sq = _mm_mul_ps(z_reals, z_reals);
@@ -315,6 +318,7 @@ z_reals = _mm_add_ps(_mm_sub_ps(z_real_sq, z_imag_sq), reals);
 #if UNROLL_FACTOR > 1
             __m256i iters_old = _mm256_setzero_si256();
             __m256 z_reals_old, z_imags_old, z_sums_old;
+            __m256i cmp_val_old;
             __m256i unroll_factors = _mm256_set1_epi32(UNROLL_FACTOR);
 #endif
             while ( _mm256_movemask_ps(_mm256_castsi256_ps(cmp_val)) && !_mm256_movemask_ps(_mm256_cmp_ps(_mm256_cvtepi32_ps(iters), maxIters, _CMP_GE_OQ)) ) { 
@@ -323,6 +327,7 @@ z_reals = _mm_add_ps(_mm_sub_ps(z_real_sq, z_imag_sq), reals);
                 z_reals_old = z_reals;
                 z_imags_old = z_imags;
                 z_sums_old = z_sums;
+                cmp_val_old = cmp_val;
 #endif
                 
                 // incrementing iters performed by using integer ops separately on the halves of iters
@@ -399,6 +404,7 @@ z_reals = _mm256_add_ps(_mm256_sub_ps(z_real_sq, z_imag_sq), reals);
             z_reals = z_reals_old;
             z_imags = z_imags_old;
             z_sums = z_sums_old;
+            cmp_val = cmp_val_old;
             while ( _mm256_movemask_ps(_mm256_castsi256_ps(cmp_val)) && !_mm256_movemask_ps(_mm256_cmp_ps(_mm256_cvtepi32_ps(iters), maxIters, _CMP_GE_OQ)) ) { 
                 __m128i itershalf0 = _mm256_extractf128_si256(iters, 0);  // half of iters
                 __m128i itershalf1 = _mm256_extractf128_si256(iters, 1);  // other half
@@ -703,6 +709,139 @@ z_real[index] = z_real_sq - z_imag_sq + real[index];
     }
 }
 
+void ompMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
+#ifdef __SSE2__
+#ifndef __AVX__
+/* SSE2 */
+#define VECTOR_WIDTH 4
+#else  // #ifdef __AVX__
+/* AVX */
+#define VECTOR_WIDTH 8
+#endif
+#else  // #ifndef __SSE2__
+#ifdef __MIC__
+#define VECTOR_WIDTH 16
+#endif // __MIC__
+#endif // __SSE2__
+
+
+#define INITIALIZE(type, varname, value) \
+    type varname[VECTOR_WIDTH]; \
+    for (int index = 0; index < VECTOR_WIDTH; index++ ) \
+        varname[index] = value;
+
+#pragma omp parallel for simd schedule(dynamic)
+    for (int i = 0; i < steps; i++) {
+        for (int j = 0; j < horizsteps; j += VECTOR_WIDTH) {
+            INITIALIZE(float, real, startReal + step*(j+index))
+            const float imagcoord = startImag - step*i;   // the value for all lanes of the vector
+            INITIALIZE(float, imag, imagcoord)
+            INITIALIZE(unsigned, iters, 0)
+            INITIALIZE(float, z_real, 0.0f)
+            INITIALIZE(float, z_imag, 0.0f)
+            INITIALIZE(bool, on, true)
+            bool any_on = true;
+#if UNROLL_FACTOR > 1
+            INITIALIZE(float, iters_old, 0)
+            float z_real_old[VECTOR_WIDTH], z_imag_old[VECTOR_WIDTH], z_sum_old[VECTOR_WIDTH];
+            bool on_old[VECTOR_WIDTH];
+#endif
+            while (any_on) {
+                any_on = false;
+                for (int index = 0; index < VECTOR_WIDTH; index++) {
+                    if (on[index]) {
+#if UNROLL_FACTOR > 1
+                        iters_old[index] = iters[index];
+                        z_real_old[index] = z_real[index];
+                        z_imag_old[index] = z_imag[index];
+                        on_old[index] = true;
+#endif
+
+                        iters[index] += UNROLL_FACTOR;
+                        
+                        float z_real_sq = z_real[index]*z_real[index];
+                        float z_imag_sq = z_imag[index]*z_imag[index];
+                        float z_sum = z_real_sq + z_imag_sq;
+                        z_imag[index] = 2.0f*z_real[index]*z_imag[index] + imag[index];
+                        z_real[index] = z_real_sq - z_imag_sq + real[index];
+                        
+#define EXTRA_ITERATION_OMP \
+z_real_sq = z_real[index]*z_real[index]; \
+z_imag_sq = z_imag[index]*z_imag[index]; \
+z_sum = z_real_sq + z_imag_sq; \
+z_imag[index] = 2.0f*z_real[index]*z_imag[index] + imag[index]; \
+z_real[index] = z_real_sq - z_imag_sq + real[index];
+
+#if UNROLL_FACTOR >= 2
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 3
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 4
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 5
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 6
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 7
+                        EXTRA_ITERATION_OMP
+#endif
+
+#if UNROLL_FACTOR >= 8
+                        EXTRA_ITERATION_OMP
+#endif
+                        if (z_sum < 4.0f && iters[index] < maxiters)
+                           any_on = true;
+                        else 
+                           on[index] = false;
+                    } else {   // was not on[index]
+                        on_old[index] = false;
+                    }
+                }
+            }
+            
+#if UNROLL_FACTOR > 1
+            for (int index = 0; index < VECTOR_WIDTH; index++) {
+                iters[index] = iters_old[index];
+                z_real[index] = z_real_old[index];
+                z_imag[index] = z_imag_old[index];
+                on[index] = on_old[index];
+            }
+            any_on = true;
+            while (any_on) {
+                any_on = false;
+                for (int index = 0; index < VECTOR_WIDTH; index++) {
+                    if (on[index]) {
+                        iters[index]++;
+                        float z_real_sq = z_real[index]*z_real[index];
+                        float z_imag_sq = z_imag[index]*z_imag[index];
+                        float z_sum = z_real_sq + z_imag_sq;
+                        z_imag[index] = 2.0f*z_real[index]*z_imag[index] + imag[index];
+                        z_real[index] = z_real_sq - z_imag_sq + real[index];
+                        if (z_sum < 4.0f && iters[index] < maxiters)
+                           any_on = true;
+                        else 
+                           on[index] = false;
+                    }
+                }
+            } 
+#endif
+
+            for (int index = 0; index < VECTOR_WIDTH; index++)
+                output[i*horizsteps+j+index] = iters[index];
+        }
+    }
+}
+
 void ispcMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
 #pragma omp parallel for schedule(dynamic)
     for(int i = 0; i < steps; i++) {
@@ -711,7 +850,7 @@ void ispcMandel(float startReal, float startImag, int steps, int horizsteps, flo
 }
 
 void printUsage() {
-    printf("Usage: testHarness serial|intrin|intel|ISPC -c centerReal centerImag -s size -d steps -f filename -b\n");
+    printf("Usage: testHarness serial|intrin|intel|omp|ISPC -c centerReal centerImag -s size -d steps -f filename -b\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -730,14 +869,16 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    // parse serial|intrin|intel|ISPC
+    // parse serial|intrin|intel|omp|ISPC
     bool serial = false;
     bool intrin = false;
     bool intel = false;
+    bool omp = false;
     bool ispc = false;
     if (!strcmp(argv[1], "serial\0")) serial = true;
     else if (!strcmp(argv[1], "intrin\0")) intrin = true;
     else if (!strcmp(argv[1], "intel\0")) intel = true;
+    else if (!strcmp(argv[1], "omp\0")) omp = true;
     else if (!strcmp(argv[1], "ISPC\0")) ispc = true;
     else {
       printUsage();
@@ -832,6 +973,7 @@ int main(int argc, char* argv[]) {
     if (serial) serialMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (intrin) intrinsicsMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (intel) intelMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    if (omp) ompMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (ispc) ispcMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     wkf_timer_stop(timer);
     time = wkf_timer_time(timer);

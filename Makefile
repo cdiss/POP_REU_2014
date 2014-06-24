@@ -92,6 +92,15 @@ runAVX_INTEL : testHarnessAVX
 runPHI_INTEL : testHarnessPhi.mic
 	./testHarnessPhi.mic intel -b
 
+runSSE2_OMP : testHarnessSSE2
+	./testHarnessSSE2 omp -b
+
+runAVX_OMP : testHarnessAVX
+	./testHarnessAVX omp -b
+
+runPHI_OMP : testHarnessPhi.mic
+	./testHarnessPhi.mic omp -b
+
 runSSE2_ISPC : testHarnessSSE2
 	./testHarnessSSE2 ISPC -b
 
@@ -108,12 +117,16 @@ runALL : testHarnessSSE2 testHarnessAVX
 	@make runSSE2_INTRIN
 	@echo; echo; echo "SSE2 using Intel compiler vectorization"
 	@make runSSE2_INTEL
+	@echo; echo; echo "SSE2 using OpenMP"
+	@make runSSE2_OMP
 	@echo; echo; echo "SSE2 using ISPC"
 	@make runSSE2_ISPC
 	@echo; echo; echo "AVX using intrinsics"
 	@make runAVX_INTRIN
 	@echo; echo; echo "AVX using Intel compiler vectorization"
 	@make runAVX_INTEL
+	@echo; echo; echo "AVX using OpenMP"
+	@make runAVX_OMP
 	@echo; echo; echo "AVX using ISPC"
 	@make runAVX_ISPC
 	@echo
