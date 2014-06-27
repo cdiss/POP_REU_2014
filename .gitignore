@@ -1,3 +1,4 @@
+.*
 *~
 *.o
 *_ispc.h
@@ -11,9 +12,18 @@ CVS/*
 *.ppm
 ppms
 ppms/*
+*.log
+makeTable
+table.out
+gnutable*
 mandelbrot
 testHarness
-testHarnessSSE2
-testHarnessAVX
+testHarnessSSE2_*
+testHarnessAVX_*
+*.mic
 *.swp
+*.swo
 encodewmv43.sh
+sbatch_script
+squeue_command
+ispcavx.asm

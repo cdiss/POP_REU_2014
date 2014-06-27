@@ -1,0 +1,102 @@
+set datafile separator ","
+set term png size 850,1200 xffffff x000000 x404040 x0000ff font "verdana,8"
+set output '| display png:-'   # pipe output to 'display' command
+set style fill solid
+set key off
+set xrange[0:6]
+set yrange[0:300]
+set xtics rotate    # display text labels vertically
+set border 11     # remove top border, keeping the other three sides
+set xtics nomirror   # also remove tick marks from the top border
+set tics scale 0.5  # make the tick marks smaller
+set y2tics        # turn on right side tick marks
+set format y2 ""  # but remove their text
+unset mxtics    # remove "minor" tick marks
+
+set multiplot layout 3,5 title ""
+
+set label "SIMD Performance of Mandelbrot Kernel\nAll results in serial-equivalent GFLOPS" at screen 0.5,0.98 center font "verdana,12"
+
+set tmargin at screen 0.9; set bmargin at screen 0.75
+set label "SSE2" at screen 0.01,0.92 font "verdana,16"
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_sse2.out" using 2:3:xticlabels(1) with boxes
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_sse2.out" using 2:4:xticlabels(1) with boxes
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_sse2.out" using 2:5:xticlabels(1) with boxes
+
+set title "Unrolled x8"
+set format y2 "% g"   # use y-axis labels on the right side of the plot 
+set format y2 "% g"
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_sse2.out" using 2:6:xticlabels(1) with boxes
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.8; set rmargin at screen 0.95
+set format y2 ""     # remove the right-side y-axis labels
+set format y  "% g"  # restore left-side y-axis labels
+plot "gnutable_sse2.out" using 2:7:xticlabels(1) with boxes
+
+set tmargin at screen 0.6; set bmargin at screen 0.45
+set label "AVX" at screen 0.01,0.62 font "verdana,16"
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_avx.out" using 2:3:xticlabels(1) with boxes
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_avx.out" using 2:4:xticlabels(1) with boxes
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_avx.out" using 2:5:xticlabels(1) with boxes
+
+set title "Unrolled x8"
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_avx.out" using 2:6:xticlabels(1) with boxes
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.8; set rmargin at screen 0.95
+set format y2 ""      # remove the right-side y-axis labels
+set format y  "% g"   # restore left-side y-axis labels
+plot "gnutable_avx.out" using 2:7:xticlabels(1) with boxes
+
+set tmargin at screen 0.3; set bmargin at screen 0.15
+set label "Phi" at screen 0.01,0.32 font "verdana,16"
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_phi.out" using 2:3:xticlabels(1) with boxes
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_phi.out" using 2:4:xticlabels(1) with boxes
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_phi.out" using 2:5:xticlabels(1) with boxes
+
+set title "Unrolled x8"
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_phi.out" using 2:6:xticlabels(1) with boxes
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.8; set rmargin at screen 0.95
+set format y2 ""      # remove the right-side y-axis labels
+set format y  "% g"   # restore left-side y-axis labels
+plot "gnutable_phi.out" using 2:7:xticlabels(1) with boxes
+
+unset multiplot
