@@ -48,7 +48,7 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     return filter;
 }
 void printUsage() {
-    printf("Usage: testHarness serial|intrin|intel|omp|ISPC -c centerReal centerImag -s size -d steps -f filename -b\n");
+    printf("Usage: testHarness serial|intrin|intel|omp|ISPC -c centerReal centerImag -s size -d steps -f filename\n");
 }
 
 int main(int argc, char* argv[]) {
