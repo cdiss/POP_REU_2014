@@ -1,0 +1,185 @@
+set datafile separator ","
+set term postscript portrait color solid size 5.5,10 font "Helvetica,6"
+set output 'gnuplot.ps'  
+set style line 1 lc rgb "black"
+set style line 2 lc rgb "green"
+set style line 3 lc rgb "blue"
+set style line 4 lc rgb "purple"
+set style line 5 lc rgb "cyan"
+set style fill solid
+set boxwidth 1
+set key off
+set xrange[0:6]
+set ylabel "GFLOPS"
+set xtics rotate    # display text labels vertically
+set border 11     # remove top border, keeping the other three sides
+set xtics nomirror   # also remove tick marks from the top border
+set tics scale 0.5  # make the tick marks smaller
+set y2tics        # turn on right side tick marks
+set format y2 ""  # but remove their text
+unset mxtics    # remove "minor" tick marks
+
+set multiplot layout 4,5 title ""
+
+set label "SIMD Performance of Mandelbrot Kernel\nAll results in serial-equivalent GFLOPS" at screen 0.5,0.99 center font "Helvetica,11"
+
+set tmargin at screen 0.91; set bmargin at screen 0.80
+set label "SSE2 (Sydney, Intel i7-3960X (6-core, 12-thread))" at screen 0.01,0.95 font "Helvetica,11"
+
+set label "12 OpenMP threads" at screen 0.4, 0.93 center
+
+set yrange[0:350]
+set y2range[0:350]
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_sse2.out" using 2:3:xticlabels(1) with boxes lt 2
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+unset ylabel
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_sse2.out" using 2:4:xticlabels(1) with boxes lt 2
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_sse2.out" using 2:5:xticlabels(1) with boxes lt 2
+
+set title "Unrolled x8"
+set format y2 "% g"   # use y-axis labels on the right side of the plot 
+set format y2 "% g"
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_sse2.out" using 2:6:xticlabels(1) with boxes lt 2
+
+set yrange[0:22]
+set y2range[0:22]
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.82; set rmargin at screen 0.97
+set format y2 ""     # remove the right-side y-axis labels
+set format y  "% g"  # restore left-side y-axis labels
+set ylabel "GFLOPS"
+plot "gnutable_sse2.out" using 2:7:xticlabels(1) with boxes lt 2
+
+set tmargin at screen 0.65; set bmargin at screen 0.54
+set label "AVX (Sydney, Intel i7-3960X (6-core, 12-thread))" at screen 0.01,0.69 font "Helvetica,11"
+
+set label "12 OpenMP threads" at screen 0.4, 0.67 center
+
+set yrange[0:350]
+set y2range[0:350]
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_avx.out" using 2:3:xticlabels(1) with boxes lt 3
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+unset ylabel
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_avx.out" using 2:4:xticlabels(1) with boxes lt 3
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_avx.out" using 2:5:xticlabels(1) with boxes lt 3
+
+set title "Unrolled x8"
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_avx.out" using 2:6:xticlabels(1) with boxes lt 3
+
+set yrange[0:22]
+set y2range[0:22]
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.82; set rmargin at screen 0.97
+set format y2 ""      # remove the right-side y-axis labels
+set format y  "% g"   # restore left-side y-axis labels
+set ylabel "GFLOPS"
+plot "gnutable_avx.out" using 2:7:xticlabels(1) with boxes lt 3
+
+set tmargin at screen 0.39; set bmargin at screen 0.28
+set label "Phi (Stampede, Xeon Phi SE10P (60-core, 240-thread), peak 1073 GFLOPS)" at screen 0.01,0.43 font "Helvetica,11"
+
+set label "240 OpenMP threads" at screen 0.4, 0.41 center
+
+set yrange[0:1073]
+set y2range[0:1073]
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.25
+plot "gnutable_phi.out" using 2:3:xticlabels(1) with boxes lt 4
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+unset ylabel
+set lmargin at screen 0.25; set rmargin at screen 0.4
+plot "gnutable_phi.out" using 2:4:xticlabels(1) with boxes lt 4
+
+set title "Unrolled x4"
+set lmargin at screen 0.4; set rmargin at screen 0.55
+plot "gnutable_phi.out" using 2:5:xticlabels(1) with boxes lt 4
+
+set title "Unrolled x8"
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.55; set rmargin at screen 0.7
+plot "gnutable_phi.out" using 2:6:xticlabels(1) with boxes lt 4
+
+set yrange[0:9]
+set y2range[0:9]
+
+set title "Single-Threaded\n(unrolled x8)"
+set lmargin at screen 0.82; set rmargin at screen 0.97
+set format y2 ""      # remove the right-side y-axis labels
+set format y  "% g"   # restore left-side y-axis labels
+set ylabel "GFLOPS"
+plot "gnutable_phi.out" using 2:7:xticlabels(1) with boxes lt 4
+
+set tmargin at screen 0.13; set bmargin at screen 0.02
+set label "ARM (Tegra K1)" at screen 0.01,0.17 font "Helvetica,11"
+
+set xrange[0:3]
+set yrange[0:5]
+set y2range[0:5]
+
+set label "Multi-Threaded" at screen 0.32,0.15 center
+
+set title "Not Unrolled"
+set lmargin at screen 0.1; set rmargin at screen 0.21
+plot "gnutable_arm.out" using 2:3:xticlabels(1) with boxes lt 1
+
+set title "Unrolled x2"
+set format y ''    # turn off y-axis labels, leave just the tick marks
+unset ylabel
+set lmargin at screen 0.21; set rmargin at screen 0.32
+plot "gnutable_arm.out" using 2:4:xticlabels(1) with boxes lt 1
+
+set title "Unrolled x4"
+set lmargin at screen 0.32; set rmargin at screen 0.43
+plot "gnutable_arm.out" using 2:5:xticlabels(1) with boxes lt 1
+
+set title "Unrolled x8"
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.43; set rmargin at screen 0.54
+plot "gnutable_arm.out" using 2:6:xticlabels(1) with boxes lt 1
+
+set yrange[0:1.25]
+set y2range[0:1.25]
+
+set label "Single-Threaded" at screen 0.77,0.15 center 
+
+set title "Not Unrolled"
+set lmargin at screen 0.66; set rmargin at screen 0.77
+set format y2 ""      # remove the right-side y-axis labels
+set format y  "% g"   # restore left-side y-axis labels
+set ylabel "GFLOPS"
+plot "gnutable_arm.out" using 2:7:xticlabels(1) with boxes lt 1
+
+set title "Unrolled x8"
+set format y ''
+unset ylabel
+set format y2 "% g"    # use y-axis labels on the right side of the plot
+set lmargin at screen 0.77; set rmargin at screen 0.88
+plot "gnutable_arm.out" using 2:10:xticlabels(1) with boxes lt 1
+
+unset multiplot

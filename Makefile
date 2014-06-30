@@ -19,7 +19,7 @@ BINS_SSE2 = testHarnessSSE2_1t testHarnessSSE2_2t testHarnessSSE2_4t testHarness
 BINS_AVX = testHarnessAVX_1t testHarnessAVX_2t testHarnessAVX_4t testHarnessAVX_8t testHarnessAVX_8s
 BINS_PHI = testHarnessPhi_1t.mic testHarnessPhi_2t.mic testHarnessPhi_4t.mic testHarnessPhi_8t.mic testHarnessPhi_8s.mic
 
-OBJS_SSE2_1t = mandel_ispc_sse2_1t.o testHarness_sse2_1t.o WKFUtils_sse2.o
+OBJS_SSE2_1t = mandel_ispc_sse2_1t.o mandelKernels_sse2_1t.o testHarness_sse2_1t.o WKFUtils_sse2.o
 OBJS_SSE2_2t = $(subst 1t,2t,$(OBJS_SSE2_1t))
 OBJS_SSE2_4t = $(subst 1t,4t,$(OBJS_SSE2_1t))
 OBJS_SSE2_8t = $(subst 1t,8t,$(OBJS_SSE2_1t))

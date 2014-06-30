@@ -13,6 +13,9 @@ CVS/*
 ppms
 ppms/*
 *.log
+*.png
+*.pdf
+*.ps
 makeTable
 table.out
 gnutable*
