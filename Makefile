@@ -187,114 +187,190 @@ makeTable : makeTable.o
 
 runALL : testHarnessSSE2_8t testHarnessAVX_8t
 	@echo; echo; echo "Reference serial code"
-	./testHarnessSSE2_8t serial -b
+	./testHarnessSSE2_8t serial
 	@echo; echo; echo "SSE2 using intrinsics"
-	./testHarnessSSE2_8t intrin -b
+	./testHarnessSSE2_8t intrin
 	@echo; echo; echo "SSE2 using Intel compiler vectorization"
-	./testHarnessSSE2_8t intel -b
+	./testHarnessSSE2_8t intel
 	@echo; echo; echo "SSE2 using OpenMP"
-	./testHarnessSSE2_8t omp -b
+	./testHarnessSSE2_8t omp
 	@echo; echo; echo "SSE2 using ISPC"
-	./testHarnessSSE2_8t ISPC -b
+	./testHarnessSSE2_8t ISPC
 	@echo; echo; echo "AVX using intrinsics"
-	./testHarnessAVX_8t intrin -b
+	./testHarnessAVX_8t intrin
 	@echo; echo; echo "AVX using Intel compiler vectorization"
-	./testHarnessAVX_8t intel -b
+	./testHarnessAVX_8t intel
 	@echo; echo; echo "AVX using OpenMP"
-	./testHarnessAVX_8t omp -b
+	./testHarnessAVX_8t omp
 	@echo; echo; echo "AVX using ISPC"
-	./testHarnessAVX_8t ISPC -b
+	./testHarnessAVX_8t ISPC
 	@echo
 
 runALLPhi : testHarnessPhi_8t.mic
 	@echo; echo; echo "Reference serial code"
-	./testHarnessPhi_8t.mic serial -b
+	./testHarnessPhi_8t.mic serial
 	@echo; echo; echo "Intrinsics"
-	./testHarnessPhi_8t.mic intrin -b
+	./testHarnessPhi_8t.mic intrin
 	@echo; echo; echo "Intel compiler vectorization"
-	./testHarnessPhi_8t.mic intel -b
+	./testHarnessPhi_8t.mic intel
 	@echo; echo; echo "OpenMP"
-	./testHarnessPhi_8t.mic omp -b
+	./testHarnessPhi_8t.mic omp
 	@echo; echo; echo "ISPC"
-	./testHarnessPhi_8t.mic ISPC -b
+	./testHarnessPhi_8t.mic ISPC
 	@echo
 
 fullTest : $(BINS_SSE2) $(BINS_AVX) $(BINS_PHI) makeTable
+	@echo; echo; echo "SSE2, unrolled x1, multithreaded, serial"
 	./testHarnessSSE2_1t serial > fullTest.log
+	@echo; echo; echo "SSE2, unrolled x2, multithreaded, serial"
 	./testHarnessSSE2_2t serial >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x4, multithreaded, serial"
 	./testHarnessSSE2_4t serial >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, multithreaded, serial"
 	./testHarnessSSE2_8t serial >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, singlethreaded, serial"
 	./testHarnessSSE2_8s serial >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x1, multithreaded, intrinsics"
 	./testHarnessSSE2_1t intrin >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x2, multithreaded, intrinsics"
 	./testHarnessSSE2_2t intrin >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x4, multithreaded, intrinsics"
 	./testHarnessSSE2_4t intrin >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, multithreaded, intrinsics"
 	./testHarnessSSE2_8t intrin >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, singlethreaded, intrinsics"
 	./testHarnessSSE2_8s intrin >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x1, multithreaded, intel"
 	./testHarnessSSE2_1t intel >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x2, multithreaded, intel"
 	./testHarnessSSE2_2t intel >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x4, multithreaded, intel"
 	./testHarnessSSE2_4t intel >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, multithreaded, intel"
 	./testHarnessSSE2_8t intel >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, singlethreaded, intel"
 	./testHarnessSSE2_8s intel >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x1, multithreaded, OpenMP"
 	./testHarnessSSE2_1t omp >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x2, multithreaded, OpenMP"
 	./testHarnessSSE2_2t omp >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x4, multithreaded, OpenMP"
 	./testHarnessSSE2_4t omp >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, multithreaded, OpenMP"
 	./testHarnessSSE2_8t omp >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, singlethreaded, OpenMP"
 	./testHarnessSSE2_8s omp >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x1, multithreaded, ISPC"
 	./testHarnessSSE2_1t ISPC >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x2, multithreaded, ISPC"
 	./testHarnessSSE2_2t ISPC >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x4, multithreaded, ISPC"
 	./testHarnessSSE2_4t ISPC >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, multithreaded, ISPC"
 	./testHarnessSSE2_8t ISPC >> fullTest.log
+	@echo; echo; echo "SSE2, unrolled x8, singlethreaded, ISPC"
 	./testHarnessSSE2_8s ISPC >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x1, multithreaded, serial"
 	./testHarnessAVX_1t serial >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x2, multithreaded, serial"
 	./testHarnessAVX_2t serial >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x4, multithreaded, serial"
 	./testHarnessAVX_4t serial >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, multithreaded, serial"
 	./testHarnessAVX_8t serial >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, singlethreaded, serial"
 	./testHarnessAVX_8s serial >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x1, multithreaded, intrinsics"
 	./testHarnessAVX_1t intrin >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x2, multithreaded, intrinsics"
 	./testHarnessAVX_2t intrin >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x4, multithreaded, intrinsics"
 	./testHarnessAVX_4t intrin >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, multithreaded, intrinsics"
 	./testHarnessAVX_8t intrin >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, singlethreaded, intrinsics"
 	./testHarnessAVX_8s intrin >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x1, multithreaded, intel"
 	./testHarnessAVX_1t intel >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x2, multithreaded, intel"
 	./testHarnessAVX_2t intel >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x4, multithreaded, intel"
 	./testHarnessAVX_4t intel >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, multithreaded, intel"
 	./testHarnessAVX_8t intel >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, singlethreaded, intel"
 	./testHarnessAVX_8s intel >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x1, multithreaded, OpenMP"
 	./testHarnessAVX_1t omp >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x2, multithreaded, OpenMP"
 	./testHarnessAVX_2t omp >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x4, multithreaded, OpenMP"
 	./testHarnessAVX_4t omp >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, multithreaded, OpenMP"
 	./testHarnessAVX_8t omp >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, singlethreaded, OpenMP"
 	./testHarnessAVX_8s omp >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x1, multithreaded, ISPC"
 	./testHarnessAVX_1t ISPC >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x2, multithreaded, ISPC"
 	./testHarnessAVX_2t ISPC >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x4, multithreaded, ISPC"
 	./testHarnessAVX_4t ISPC >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, multithreaded, ISPC"
 	./testHarnessAVX_8t ISPC >> fullTest.log
+	@echo; echo; echo "AVX, unrolled x8, singlethreaded, ISPC"
 	./testHarnessAVX_8s ISPC >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x1, multithreaded, serial"
 	./testHarnessPhi_1t.mic serial >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x2, multithreaded, serial"
 	./testHarnessPhi_2t.mic serial >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x4, multithreaded, serial"
 	./testHarnessPhi_4t.mic serial >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, multithreaded, serial"
 	./testHarnessPhi_8t.mic serial >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, singlethreaded, serial"
 	./testHarnessPhi_8s.mic serial >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x1, multithreaded, intrinsics"
 	./testHarnessPhi_1t.mic intrin >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x2, multithreaded, intrinsics"
 	./testHarnessPhi_2t.mic intrin >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x4, multithreaded, intrinsics"
 	./testHarnessPhi_4t.mic intrin >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, multithreaded, intrinsics"
 	./testHarnessPhi_8t.mic intrin >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, singlethreaded, intrinsics"
 	./testHarnessPhi_8s.mic intrin >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x1, multithreaded, intel"
 	./testHarnessPhi_1t.mic intel >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x2, multithreaded, intel"
 	./testHarnessPhi_2t.mic intel >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x4, multithreaded, intel"
 	./testHarnessPhi_4t.mic intel >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, multithreaded, intel"
 	./testHarnessPhi_8t.mic intel >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, singlethreaded, intel"
 	./testHarnessPhi_8s.mic intel >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x1, multithreaded, OpenMP"
 	./testHarnessPhi_1t.mic omp >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x2, multithreaded, OpenMP"
 	./testHarnessPhi_2t.mic omp >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x4, multithreaded, OpenMP"
 	./testHarnessPhi_4t.mic omp >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, multithreaded, OpenMP"
 	./testHarnessPhi_8t.mic omp >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, singlethreaded, OpenMP"
 	./testHarnessPhi_8s.mic omp >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x1, multithreaded, ISPC"
 	./testHarnessPhi_1t.mic ISPC >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x2, multithreaded, ISPC"
 	./testHarnessPhi_2t.mic ISPC >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x4, multithreaded, ISPC"
 	./testHarnessPhi_4t.mic ISPC >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, multithreaded, ISPC"
 	./testHarnessPhi_8t.mic ISPC >> fullTest.log
+	@echo; echo; echo "Phi, unrolled x8, singlethreaded, ISPC"
 	./testHarnessPhi_8s.mic ISPC >> fullTest.log
+	@echo
 	./makeTable fullTest.log
 
 clean:	
