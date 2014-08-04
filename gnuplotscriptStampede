@@ -1,6 +1,6 @@
 set datafile separator ","
 set term postscript portrait color solid size 5.5,10 font "Helvetica,6"
-set output 'gnuplot.ps'  
+set output 'gnuplot.ps'  # convert gnuplot.ps whatever.pdf gives you a pdf
 set style line 1 lc rgb "black"
 set style line 2 lc rgb "green"
 set style line 3 lc rgb "blue"
@@ -9,7 +9,7 @@ set style line 5 lc rgb "cyan"
 set style fill solid
 set boxwidth 1
 set key off
-set xrange[0:6]
+set xrange[0:7]
 set ylabel "GFLOPS"
 set xtics rotate    # display text labels vertically
 set border 11     # remove top border, keeping the other three sides

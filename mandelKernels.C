@@ -27,13 +27,14 @@ extern "C" {
     extern void ispcMandel_inner(float startReal, float startImag, int32_t steps, int32_t horizsteps, float step, uint32_t * output, uint32_t maxiters);
 }
 
-
 void serialMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
     
 #ifdef MULTITHREADED
 #pragma omp parallel for schedule(dynamic)
 #endif
+#pragma novector
     for (int i = 0; i < steps; i++) {
+#pragma novector
         for (int j = 0; j < horizsteps; j++) {
             float real = startReal + step*j;
             float imag = startImag - step*i;
@@ -65,6 +66,73 @@ z_imag_sq = z_imag*z_imag; \
 z_sum = z_real_sq + z_imag_sq; \
 z_imag = 2.0f*z_real*z_imag + imag; \
 z_real = z_real_sq - z_imag_sq + real; 
+
+#if UNROLL_FACTOR >= 2
+                EXTRA_ITERATION_SERIAL
+#if UNROLL_FACTOR >= 4
+                EXTRA_ITERATION_SERIAL
+                EXTRA_ITERATION_SERIAL
+#if UNROLL_FACTOR >= 8
+                EXTRA_ITERATION_SERIAL
+                EXTRA_ITERATION_SERIAL
+                EXTRA_ITERATION_SERIAL
+                EXTRA_ITERATION_SERIAL
+#endif
+#endif
+#endif
+            } 
+
+#if UNROLL_FACTOR > 1
+            iters = iters_old;
+            z_real = z_real_old;
+            z_imag = z_imag_old;
+            z_sum = z_sum_old;
+            while (z_sum < 4.0f && iters < maxIters) {
+                iters++;
+                float z_real_sq = z_real*z_real;
+                float z_imag_sq = z_imag*z_imag;
+                z_sum = z_real_sq + z_imag_sq;
+                z_imag = 2.0f*z_real*z_imag + imag;
+                z_real = z_real_sq - z_imag_sq + real;
+            }
+#endif
+            output[i*horizsteps+j] = iters;
+        }
+    }
+}
+
+
+void autoVecMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned* output, unsigned maxIters) {
+    
+#ifdef MULTITHREADED
+#pragma omp parallel for schedule(dynamic)
+#endif
+    for (int i = 0; i < steps; i++) {
+#pragma simd assert
+        for (int j = 0; j < horizsteps; j++) {
+            float real = startReal + step*j;
+            float imag = startImag - step*i;
+            unsigned iters = 0;
+            float z_real = 0.0f, z_imag = 0.0f, z_sum = 0.0f;
+#if UNROLL_FACTOR > 1
+            unsigned iters_old = 0;
+            float z_real_old, z_imag_old, z_sum_old;
+#endif
+            while (z_sum < 4.0f && iters < maxIters) {
+#if UNROLL_FACTOR > 1
+                iters_old = iters;
+                z_real_old = z_real;
+                z_imag_old = z_imag;
+                z_sum_old = z_sum;
+#endif
+                
+                iters += UNROLL_FACTOR;
+                
+                float z_real_sq = z_real*z_real;
+                float z_imag_sq = z_imag*z_imag;
+                z_sum = z_real_sq + z_imag_sq;
+                z_imag = 2.0f*z_real*z_imag + imag;
+                z_real = z_real_sq - z_imag_sq + real;
 
 #if UNROLL_FACTOR >= 2
                 EXTRA_ITERATION_SERIAL
@@ -464,7 +532,7 @@ z_reals = _mm512_add_ps(_mm512_sub_ps(z_real_sq, z_imag_sq), reals);
 
 }  // end function intrinsicsMandel
 
-void intelMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
+void interchangeMandel(float startReal, float startImag, int steps, int horizsteps, float step, unsigned * output, unsigned maxiters) {
 #ifdef __SSE2__
 #ifndef __AVX__
 /* SSE2 */
@@ -611,9 +679,7 @@ void ompMandel(float startReal, float startImag, int steps, int horizsteps, floa
         varname[index] = value;
 
 #ifdef MULTITHREADED
-#pragma omp parallel for simd schedule(dynamic)
-#else
-#pragma omp for simd
+#pragma omp parallel for schedule(dynamic)
 #endif
     for (int i = 0; i < steps; i++) {
         for (int j = 0; j < horizsteps; j += VECTOR_WIDTH) {
@@ -632,6 +698,7 @@ void ompMandel(float startReal, float startImag, int steps, int horizsteps, floa
 #endif
             while (any_on) {
                 any_on = false;
+#pragma omp simd
                 for (int index = 0; index < VECTOR_WIDTH; index++) {
                     if (on[index]) {
 #if UNROLL_FACTOR > 1
@@ -691,6 +758,7 @@ z_real[index] = z_real_sq - z_imag_sq + real[index];
             any_on = true;
             while (any_on) {
                 any_on = false;
+#pragma omp simd
                 for (int index = 0; index < VECTOR_WIDTH; index++) {
                     if (on[index]) {
                         iters[index]++;

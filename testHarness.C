@@ -48,7 +48,7 @@ unsigned* boxFilter(unsigned * output, int size, int horSize) {
     return filter;
 }
 void printUsage() {
-    printf("Usage: testHarness serial|intrin|intel|omp|ISPC -c centerReal centerImag -s size -d steps -f filename\n");
+    printf("Usage: testHarness serial|autovec|intrin|interchange|omp|ISPC -c centerReal centerImag -s size -d steps -f filename\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -67,15 +67,17 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    // parse serial|intrin|intel|omp|ISPC
+    // parse serial|autovec|intrin|interchange|omp|ISPC
     bool serial = false;
+    bool autovec = false;
     bool intrin = false;
-    bool intel = false;
+    bool interchange = false;
     bool omp = false;
     bool ispc = false;
     if (!strcmp(argv[1], "serial\0")) serial = true;
+    else if (!strcmp(argv[1], "autovec\0")) autovec = true;
     else if (!strcmp(argv[1], "intrin\0")) intrin = true;
-    else if (!strcmp(argv[1], "intel\0")) intel = true;
+    else if (!strcmp(argv[1], "interchange\0")) interchange = true;
     else if (!strcmp(argv[1], "omp\0")) omp = true;
     else if (!strcmp(argv[1], "ISPC\0")) ispc = true;
     else {
@@ -105,7 +107,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (intrin || intel)
+    if (intrin || interchange)
 #ifdef __SSE2__
 #ifndef __AVX__
         // make steps divisible by 4
@@ -154,8 +156,9 @@ int main(int argc, char* argv[]) {
     wkf_timerhandle timer = wkf_timer_create();
     wkf_timer_start(timer); 
     if (serial) serialMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    if (autovec) autoVecMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (intrin) intrinsicsMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
-    if (intel) intelMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
+    if (interchange) interchangeMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (omp) ompMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     if (ispc) ispcMandel(startReal, startImag, steps, horizsteps, stepsize, output, maxIters);
     wkf_timer_stop(timer);
